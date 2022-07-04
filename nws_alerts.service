@@ -1,0 +1,11 @@
+[Unit]
+Description=National Weather Service Alerts
+
+[Service]
+Type=simple
+User=lee
+Group=audio
+ExecStart=/usr/share/nws_alerts/nws_alerts.sh
+
+[Install]
+WantedBy=multi-user.target
