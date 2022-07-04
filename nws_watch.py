@@ -78,16 +78,23 @@ cfg_end   = '" -w /tmp/espeak-wx.wav -g 10 -p 50 -s 175 -v en-us && play /tmp/es
 
 
 # Main script
-feed_url = "https://alerts.weather.gov/cap/"+ cfg_state.lower() +".php?x=0"
-feed_age = subprocess.check_output('find /tmp/nws_data.xml -mmin +' + cfg_timer, shell=True, universal_newlines=True)
-if len(feed_age) > 0:
-	os.system('wget --quiet -O "/tmp/nws_data.xml" ' + feed_url + '');
-	print("\n\n[-] Weather fetched from NWS [" + cfg_cname + ", " + cfg_state  + "]")
+data_exists = os.path.exists('/tmp/nws_data.xml')
+
+if data_exists:
+	feed_url = "https://alerts.weather.gov/cap/"+ cfg_state.lower() +".php?x=0"
+	feed_age = subprocess.check_output('find /tmp/nws_data.xml -mmin +' + cfg_timer, shell=True, universal_newlines=True)
+	if len(feed_age) > 0:
+		os.system('wget --quiet -O "/tmp/nws_data.xml" ' + feed_url + '');
+		print("\n\n[-] Weather fetched from NWS [" + cfg_cname + ", " + cfg_state  + "]")
+	else:
+		feed_now = float(time.time())
+		feed_dif = float(feed_now + (float(cfg_timer) * 60))
+		feed_nxt = datetime.fromtimestamp(feed_dif)
+		print("[-] Weather threat monitoring (" + cfg_cname + ", " + cfg_state + " - Next update: " + feed_nxt.strftime('%H:%M:%S') + ")")
 else:
-	feed_now = float(time.time())
-	feed_dif = float(feed_now + (float(cfg_timer) * 60))
-	feed_nxt = datetime.fromtimestamp(feed_dif)
-	print("[-] Weather threat monitoring (" + cfg_cname + ", " + cfg_state + " - Next update: " + feed_nxt.strftime('%H:%M:%S') + ")")
+	os.system('touch /tmp/nws_data.xml')
+	os.system('chmod a+rw /tmp/nws_data.xml')
+
 feed_xml = open("/tmp/nws_data.xml", "r")
 feed_dat = feed_xml.read().replace("cap:", "cap_")
 feed_xml.close()
