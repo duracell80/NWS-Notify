@@ -54,9 +54,17 @@ except KeyError:
 else:
     cfg_level = cfg['alert_conf']['level']
 
+# CONF: NWS Feed Backoff
+try:
+    cfg['alert_conf']['timer']
+except KeyError:
+    cfg_timer = "5"
+else:
+    cfg_timer = cfg['alert_conf']['timer']
+
 
 cfg_cwarn = "Severe Thunderstorm Warning"
-cfg_timer = "15"
+#cfg_timer = "15"
 cfg_cmd   = "notify-send"
 cfg_sound = "speaker-test -t sine -f 1000 -l 1 -S " + cfg_level + ""
 cfg_go    = "no"
@@ -73,7 +81,7 @@ cfg_end   = '" -w /tmp/espeak-wx.wav -g 10 -p 50 -s 175 -v en-us && play /tmp/es
 feed_url = "https://alerts.weather.gov/cap/"+ cfg_state.lower() +".php?x=0"
 feed_age = subprocess.check_output('find /tmp/nws_data.xml -mmin +' + cfg_timer, shell=True, universal_newlines=True)
 if len(feed_age) > 0:
-	os.system('wget --quiet -O "/usr/tmp/nws_data.xml" ' + feed_url + '');
+	os.system('wget --quiet -O "/tmp/nws_data.xml" ' + feed_url + '');
 	print("\n\n[-] Weather fetched from NWS [" + cfg_cname + ", " + cfg_state  + "]")
 else:
 	feed_now = float(time.time())
@@ -125,6 +133,7 @@ for post in posts:
         if cfg_voice == "on":
             os.system(cfg_sound)
             os.system(cfg_start + cfg_msg + cfg_end)
+
 for post in posts:
     if "Severe Weather Statement" in post.title and cfg_cname in post.cap_areadesc:
         cfg_msg = "Weather Alert: A Severe Weather Statement has been issued for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ") + ' Expires: ' + post.cap_expires
