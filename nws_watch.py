@@ -68,7 +68,7 @@ cfg_cwarn = "Severe Thunderstorm Warning"
 cfg_cmd   = "notify-send"
 cfg_sound = "speaker-test -t sine -f 1000 -l 1 -S " + cfg_level + ""
 cfg_go    = "no"
-
+cfg_log   = "/tmp/nws_seen.txt"
 
 cfg_start = 'espeak "'
 cfg_end   = '" -w /tmp/espeak-wx.wav -g 10 -p 50 -s 175 -v en-us && play /tmp/espeak-wx.wav'
@@ -78,22 +78,29 @@ cfg_end   = '" -w /tmp/espeak-wx.wav -g 10 -p 50 -s 175 -v en-us && play /tmp/es
 
 
 # Main script
+os.system('sort /tmp/nws_seen.txt | uniq > /tmp/nws_seen.tmp && cat /tmp/nws_seen.tmp > /tmp/nws_seen.txt && rm /tmp/nws_seen.tmp')
+
+
+
 data_exists = os.path.exists('/tmp/nws_data.xml')
 
 if data_exists:
-	feed_url = "https://alerts.weather.gov/cap/"+ cfg_state.lower() +".php?x=0"
-	feed_age = subprocess.check_output('find /tmp/nws_data.xml -mmin +' + cfg_timer, shell=True, universal_newlines=True)
-	if len(feed_age) > 0:
-		os.system('wget --quiet -O "/tmp/nws_data.xml" ' + feed_url + '');
-		print("\n\n[-] Weather fetched from NWS [" + cfg_cname + ", " + cfg_state  + "]")
-	else:
-		feed_now = float(time.time())
-		feed_dif = float(feed_now + (float(cfg_timer) * 60))
-		feed_nxt = datetime.fromtimestamp(feed_dif)
-		print("[-] Weather threat monitoring (" + cfg_cname + ", " + cfg_state + " - Next update: " + feed_nxt.strftime('%H:%M:%S') + ")")
+    feed_url = "https://alerts.weather.gov/cap/"+ cfg_state.lower() +".php?x=0"
+    feed_age = subprocess.check_output('find /tmp/nws_data.xml -mmin +' + cfg_timer, shell=True, universal_newlines=True)
+    if len(feed_age) > 0:
+        os.system('wget --quiet -O "/tmp/nws_data.xml" ' + feed_url + '');
+        print("\n\n[-] Weather fetched from NWS [" + cfg_cname + ", " + cfg_state  + "]")
+    else:
+        feed_now = float(time.time())
+        feed_dif = float(feed_now + (float(cfg_timer) * 60))
+        feed_nxt = datetime.fromtimestamp(feed_dif)
+        print("[-] Weather threat monitoring (" + cfg_cname + ", " + cfg_state + " - Next update: " + feed_nxt.strftime('%H:%M:%S') + ")")
+
 else:
-	os.system('touch /tmp/nws_data.xml')
-	os.system('chmod a+rw /tmp/nws_data.xml')
+    os.system('touch /tmp/nws_data.xml')
+    os.system('chmod a+rw /tmp/nws_data.xml')
+    os.system('touch /tmp/nws_seen.txt')
+    os.system('chmod a+rw /tmp/nws_seen.txt')
 
 feed_xml = open("/tmp/nws_data.xml", "r")
 feed_dat = feed_xml.read().replace("cap:", "cap_")
@@ -213,15 +220,26 @@ for post in posts:
 
 for post in posts:
     if "Heat Advisory" in post.title and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A Heat Advisory is in effect for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ")
-        print(cfg_msg)
+        file = open(cfg_log, 'r')
+        lines = file.readlines()
+        
+        n_seen = "no"
+        for line in lines:
+            if post.id in line:
+                n_seen = "yes"
+                
+        if n_seen == "no":
+            cfg_msg = "Weather Alert: A Heat Advisory is in effect for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ")
+            print(cfg_msg)
 
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-        if cfg_alert == "on":
-            os.system(cfg_sound)
-        if cfg_voice == "on":
-            os.system(cfg_start + cfg_msg + cfg_end)
+            cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
+            os.system(cfg_script)
+            os.system('echo '+post.id+' >> '+cfg_log+'')
+
+            if cfg_alert == "on":
+                os.system(cfg_sound)
+            if cfg_voice == "on":
+                os.system(cfg_start + cfg_msg + cfg_end)
 
 for post in posts:
     if "Snow Advisory" in post.title and cfg_cname in post.cap_areadesc:
