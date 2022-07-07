@@ -1,9 +1,14 @@
 sudo apt-get install wget espeak python3-pip
 
-sudo pip3 install --upgrade configparser
-sudo pip3 install --upgrade feedparser
-sudo pip3 install --upgrade numpy
-sudo pip3 install --upgrade pandas
+sudo pip3 install configparser
+sudo pip3 install feedparser
+sudo pip3 install numpy
+sudo pip3 install pandas
+sudo pip3 install pyqrcode
+sudo pip3 install pypng
+sudo pip3 install pyshorteners
+sudo pip3 install notify-send.py
+
 
 mkdir -p ~/.nws_alerts
 sudo chmod a+x nws_watch.py

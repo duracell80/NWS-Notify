@@ -1,8 +1,12 @@
-import os, subprocess, time, configparser
+import os, subprocess, time, configparser, feedparser, pandas
 from datetime import datetime
 
-import feedparser, pandas
+# Import QRCode from pyqrcode
+import pyqrcode
+import png
+from pyqrcode import QRCode
 
+import pyshorteners
 
 
 # Change TN to your state for example KY
@@ -61,27 +65,45 @@ except KeyError:
     cfg_timer = "5"
 else:
     cfg_timer = cfg['alert_conf']['timer']
+    
+# CONF: NWS Alert Trigger Words
+try:
+    cfg['alert_conf']['keywords']
+except KeyError:
+    cfg_kwords      = "tornado warning, special weather statement"
+    cfg_keywords    = cfg_kwords.split(",")
+else:
+    cfg_kwords      = cfg['alert_conf']['keywords']
+    cfg_keywords    = cfg_kwords.split(",")
+    
+# CONF: QR CODES
+try:
+    cfg['nws_conf']['qrcode']
+except KeyError:
+    cfg_qrcodes      = "off"
+else:
+    cfg_qrcodes      = cfg['nws_conf']['qrcode']
+    
+# CONF: SHORTEN URLS
+try:
+    cfg['nws_conf']['urlsht']
+except KeyError:
+    cfg_urlsht      = "off"
+else:
+    cfg_urlsht      = cfg['nws_conf']['urlsht']
 
 
-cfg_cwarn = "Severe Thunderstorm Warning"
-#cfg_timer = "15"
-cfg_cmd   = "notify-send"
-cfg_sound = "speaker-test -t sine -f 1000 -l 1 -S " + cfg_level + ""
-cfg_go    = "no"
 cfg_log   = "/tmp/nws_seen.txt"
-
+cfg_cmd   = "notify-send"
 cfg_start = 'espeak "'
 cfg_end   = '" -w /tmp/espeak-wx.wav -g 10 -p 50 -s 175 -v en-us && play /tmp/espeak-wx.wav'
+cfg_sound = "speaker-test -t sine -f 1000 -l 1 -S " + cfg_level + ""
 
 
 
 
-
+        
 # Main script
-os.system('sort /tmp/nws_seen.txt | uniq > /tmp/nws_seen.tmp && cat /tmp/nws_seen.tmp > /tmp/nws_seen.txt && rm /tmp/nws_seen.tmp')
-
-
-
 data_exists = os.path.exists('/tmp/nws_data.xml')
 
 if data_exists:
@@ -108,273 +130,62 @@ feed_xml.close()
 
 blog_feed = feedparser.parse(feed_dat)
 
+# READ THE FEED
 posts = blog_feed.entries
 
+# GO THROUGH THE FEED
 for post in posts:
-    if "Thunderstorm Watch" in post.title and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: Storm Watch is in effect for your area ... (" + cfg_cname + ")"
-        print(cfg_msg)
+    if cfg_cname in post.cap_areadesc:
 
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-
-for post in posts:
-    if (cfg_cwarn or "Thunderstorm Warning") in post.title and cfg_cname in post.summary:
-        cfg_msg = "Weather Alert: A Severe Storm Warning is in effect for your area ... (" + post.cap_areadesc + ")" + post.summary.replace("*", " ") + ' Expires: ' + post.cap_expires
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-        if cfg_voice == "on":
-            os.system(cfg_sound)
-            os.system(cfg_start + cfg_msg + cfg_end)
-
-for post in posts:
-    if "Tornado Watch" in post.title and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A Tornado Watch is in effect for your area ... (" + cfg_cname + ")"
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-
-for post in posts:
-    if (cfg_cwarn or "Tornado Warning") in post.title and cfg_cname in post.summary:
-        cfg_msg = "Weather Alert: A Tornado Warning in efefct for your area ... (" + post.cap_areadesc + ")" + post.summary.replace("*", " ") + ' Expires: ' + post.cap_expires
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-        if cfg_voice == "on":
-            os.system(cfg_sound)
-            os.system(cfg_start + cfg_msg + cfg_end)
-
-for post in posts:
-    if "Severe Weather Statement" in post.title and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A Severe Weather Statement has been issued for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ") + ' Expires: ' + post.cap_expires
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-        if cfg_voice == "on":
-            os.system(cfg_sound)
-            os.system(cfg_start + cfg_msg + cfg_end)
-
-for post in posts:
-    if "Special Weather Statement" in post.title and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A Special Weather Statement has been issued for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ") + ' Expires: ' + post.cap_expires
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-
-for post in posts:
-    if "Hurricane Watch" in post.title and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A Hurricane Watch has been issued for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ") + ' Expires: ' + post.cap_expires
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-
-for post in posts:
-    if "Hurricane Warning" in post.title and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A Hurricane Warning has been issued for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ") + ' Expires: ' + post.cap_expires
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        cfg_go = "yes"
-        os.system(cfg_script)
-        if cfg_voice == "on":
-            os.system(cfg_sound)
-            os.system(cfg_start + cfg_msg + cfg_end)
-
-for post in posts:
-    if "Tropical Storm Warning" in post.title and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A Tropical Storm Warning has been issued for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ") + ' Expires: ' + post.cap_expires
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        cfg_go = "yes"
-        os.system(cfg_script)
-        if cfg_voice == "on":
-            os.system(cfg_sound)
-            os.system(cfg_start + cfg_msg + cfg_end)
-
-for post in posts:
-    if "Flood Advisory" in post.title and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A Flood Advisory is in effect for your area ... (" + cfg_cname + ")\n\n"
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-
-for post in posts:
-    if "Flash Flood Warning" in post.title and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A Flash Flood Warning is in effect for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ")
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-        if cfg_voice == "on":
-            os.system(cfg_sound)
-            os.system(cfg_start + cfg_msg + cfg_end)
-
-for post in posts:
-    if "Heat Advisory" in post.title and cfg_cname in post.cap_areadesc:
+        # READ THE SEEN ALERTS FILE (Cleared on system reboot, logout etc)
         file = open(cfg_log, 'r')
         lines = file.readlines()
         
+        # LOOK FOR SEEN ALERT ID's
         n_seen = "no"
         for line in lines:
             if post.id in line:
                 n_seen = "yes"
-                
-        if n_seen == "no":
-            cfg_msg = "Weather Alert: A Heat Advisory is in effect for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ")
-            print(cfg_msg)
 
-            cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
+        # CONTINUE IF ALERT NOT ALREADY SEEN        
+        if n_seen == "no":
+            url = post.id
+            cfg_tit = "Weather Alert For."
+            cfg_msg = "[ " + cfg_cname.upper() + " County ]" + post.summary.replace("*", " ")
+            print(cfg_msg)
+            
+            # SHORTEN URL FIRST
+            if cfg_urlsht == "on":
+                shorten = pyshorteners.Shortener()
+                url_sht = shorten.tinyurl.short(url)
+                url = url_sht
+
+            # GENERATE A QRCODE TO THE NWS
+            if cfg_qrcodes == "on":
+                url_bits = post.id.split("?x=")
+                
+                frl = "/tmp/nwsqr_" + url_bits[1] + ".png"
+                qrl = pyqrcode.create(url)
+                qrl.png(frl, scale =10, module_color=[0, 0, 0, 255], background=[0xff, 0xff, 0xff])
+
+
+                cfg_script = cfg_cmd + ' --hint=string:image-path:'+frl+' --urgency=normal --category=im.received --icon=dialog-warning-symbolic "' + post.title +'" "' + cfg_msg + '"'
+            else:
+                if cfg_urlsht == "on":
+                    # SHORTEN URL
+                    cfg_script = cfg_cmd + ' --urgency=normal --category=im.received --icon=dialog-warning-symbolic "' + post.title +'" "' + cfg_msg + ' ' + url + '"'
+                else:
+                    # USE NWS LONG URL
+                    cfg_script = cfg_cmd + ' --urgency=normal --category=im.received --icon=dialog-warning-symbolic "' + post.title +'" "' + cfg_msg + ' ' + post.id + '"'
+            
+            # TRIGGER NOTIFIY SEND
             os.system(cfg_script)
             os.system('echo '+post.id+' >> '+cfg_log+'')
 
-            if cfg_alert == "on":
-                os.system(cfg_sound)
-            if cfg_voice == "on":
-                os.system(cfg_start + cfg_msg + cfg_end)
-
-for post in posts:
-    if "Snow Advisory" in post.title and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A Snow Advisory is in effect for your area ... (" + cfg_cname + ")\n\n"
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-
-for post in posts:
-    if "Ice Storm Warning" in post.title and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: An Ice Storm Warning is in effect for your area ... (" + cfg_cname + ")\n\n"
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-
-for post in posts:
-    if "Freezing Rain Advisory" in post.title and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A Freezing Rain Advisory is in effect for your area ... (" + cfg_cname + ")\n\n"
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-
-for post in posts:
-    if "Freezing Rain Warning" in post.title and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A Freezing Rain Warning has been issued for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ")
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-        if cfg_voice == "on":
-            os.system(cfg_sound)
-            os.system(cfg_start + cfg_msg + cfg_end)
-
-for post in posts:
-    if "Blizzard Warning" in post.title and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A Blizzard Warning has been issued for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ")
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-        if cfg_voice == "on":
-            os.system(cfg_sound)
-            os.system(cfg_start + cfg_msg + cfg_end)
-
-for post in posts:
-    if "High Wind Warning" in post.title and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A High Wind Warning in effect for your area ... (" + cfg_cname + ")" + post.summary.replace("*", " ")
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-
-for post in posts:
-    if "Red Flag Warning" in post.title and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A Red Flag Warning in effect for your area ... (" + cfg_cname + ")" + post.summary.replace("*", " ")
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-
-for post in posts:
-    if "Wind Advisory" in post.title and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A Wind Advisory is in effect for your area ... (" + cfg_cname + ")"
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-
-for post in posts:
-    if "air quailty" in post.summary and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: An Air Quality Alert has been issued for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ")
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-
-for post in posts:
-    if "smoke" in post.summary and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: An Air Quality Alert has been issued for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ")
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-
-for post in posts:
-    if "ice" in post.summary and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A Winter Alert has been issued for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ")
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-
-for post in posts:
-    if "fire" in post.summary and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A Fire Danger Alert has been issued for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ")
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-        os.system(cfg_sound)
-        os.system(cfg_start + cfg_msg + cfg_end)
-
-for post in posts:
-    if "tornado" in post.summary and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Weather Alert: A Tornado Alert has been issued for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ")
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-
-for post in posts:
-    if "amber alert" in post.summary and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Child Alert: A Citizen Alert has been issued for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ")
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-
-for post in posts:
-    if "silver alert" in post.summary and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Elderly Alert: A Citizen Alert has been issued for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ")
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-
-
-for post in posts:
-    if "blue alert" in post.summary and cfg_cname in post.cap_areadesc:
-        cfg_msg = "Responder Alert: A First Responder Alert has been issued for your area ... (" + cfg_cname + ")\n\n" + post.summary.replace("*", " ")
-        print(cfg_msg)
-
-        cfg_script = cfg_cmd + ' "' + cfg_msg + '"'
-        os.system(cfg_script)
-
+            # SOUND ALERT - only if title contains keywords defined in configuration and sound alerts enabled
+            kfound = [fn for fn in cfg_keywords if(fn.lower() in post.cap_event.lower())]
+            if bool(kfound):
+                if cfg_alert == "on":
+                    os.system(cfg_sound)
+                if cfg_voice == "on":
+                    os.system(cfg_start + cfg_tit + cfg_msg + cfg_end)
