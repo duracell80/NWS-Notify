@@ -1,12 +1,7 @@
 import os, subprocess, time, configparser, feedparser, pandas
 from datetime import datetime
 
-# Import QRCode from pyqrcode
-import pyqrcode
-import png
-from pyqrcode import QRCode
 
-import pyshorteners
 
 
 # Change TN to your state for example KY
@@ -150,18 +145,24 @@ for post in posts:
         # CONTINUE IF ALERT NOT ALREADY SEEN        
         if n_seen == "no":
             url = post.id
-            cfg_tit = "Weather Alert For."
-            cfg_msg = "[ " + cfg_cname.upper() + " County ]" + post.summary.replace("*", " ")
+            cfg_tit = "Weather Alert For " + cfg_cname.upper() + " County."
+            cfg_msg = post.summary.replace("*", " ")
             print(cfg_msg)
             
             # SHORTEN URL FIRST
             if cfg_urlsht == "on":
+                import pyshorteners
+                
                 shorten = pyshorteners.Shortener()
                 url_sht = shorten.tinyurl.short(url)
                 url = url_sht
 
             # GENERATE A QRCODE TO THE NWS
             if cfg_qrcodes == "on":
+                import pyqrcode
+                import png
+                from pyqrcode import QRCode
+                
                 url_bits = post.id.split("?x=")
                 
                 frl = "/tmp/nwsqr_" + url_bits[1] + ".png"
@@ -169,14 +170,15 @@ for post in posts:
                 qrl.png(frl, scale =10, module_color=[0, 0, 0, 255], background=[0xff, 0xff, 0xff])
 
 
-                cfg_script = cfg_cmd + ' --hint=string:image-path:'+frl+' --urgency=normal --category=im.received --icon=dialog-warning-symbolic "' + post.title +'" "' + cfg_msg + '"'
+                cfg_script = cfg_cmd + ' --hint=string:image-path:'+frl+' --urgency=normal --category=im.received --icon=dialog-warning-symbolic "' + post.title + ' [ ' + cfg_cname.upper() + ' County ]" "' + cfg_msg + '"'
             else:
                 if cfg_urlsht == "on":
                     # SHORTEN URL
-                    cfg_script = cfg_cmd + ' --urgency=normal --category=im.received --icon=dialog-warning-symbolic "' + post.title +'" "' + cfg_msg + ' ' + url + '"'
+                    cfg_script = cfg_cmd + ' --urgency=normal --category=im.received --icon=dialog-warning-symbolic "' + post.title + ' [ ' + cfg_cname.upper() + ' County ]" "' + cfg_msg + ' ' + url + '"'
+                    
                 else:
                     # USE NWS LONG URL
-                    cfg_script = cfg_cmd + ' --urgency=normal --category=im.received --icon=dialog-warning-symbolic "' + post.title +'" "' + cfg_msg + ' ' + post.id + '"'
+                    cfg_script = cfg_cmd + ' --urgency=normal --category=im.received --icon=dialog-warning-symbolic "' + post.title + ' [ ' + cfg_cname.upper() + ' County ]" "' + cfg_msg + ' ' + post.id + '"'
             
             # TRIGGER NOTIFIY SEND
             os.system(cfg_script)
