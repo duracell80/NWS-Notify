@@ -26,5 +26,6 @@ sudo cp nws_data.xml /tmp/nws_data.xml
 sudo cp config.ini /usr/share/nws_alerts
 cp config.ini ~/.nws_alerts
 cp nws_seen.txt /tmp
+sudo cp web_server.py /usr/share/nws_alerts
 #sudo systemctl daemon-reload
 #sudo systemctl restart nws_alerts
