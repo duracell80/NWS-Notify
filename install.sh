@@ -11,12 +11,14 @@ sudo pip3 install pyshorteners
 
 
 mkdir -p ~/.nws_alerts
+mkdir -p /tmp/nws_data
 sudo chmod a+x nws_watch.py
 sudo chmod a+rw nws_seen.txt
 sudo chmod a+x nws_alerts.sh
 sudo chmod a+x nws_alerts.service
 sudo chmod a+rw nws_data.xml
 sudo chmod a+r config.ini
+
 
 sudo mkdir -p /usr/share/nws_alerts
 sudo cp nws_watch.py /usr/share/nws_alerts

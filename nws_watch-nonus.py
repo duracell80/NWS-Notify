@@ -1,101 +1,37 @@
 import os, subprocess, time, configparser, feedparser, pandas
 from datetime import datetime
 
+from capparselib.parsers import CAPParser
 
-
-
-# Change TN to your state for example KY
-# Change Davison to your county for example Benton
-
-# Documentation	: https://alerts.weather.gov/cap/pdf/CAP%20v12%20guide%20web%2006052013.pdf
 cfg = configparser.ConfigParser()
 cfg.sections()
 cfg.read('/usr/share/nws_alerts/config.ini')
 
 
-# CONF: Set The State Scope
-try:
-    cfg['nws_conf']['region-nonus']
-except KeyError:
-    cfg_region = "FN"
-else:
-    cfg_region = cfg['nws_conf']['region-nonus'].upper()
 
-# CONF: Set The County Scope
-try:
-    cfg['nws_conf']['locale-nonus']
-except KeyError:
-    cfg_locale = "Uusimaa,Tornio"
-else:
-    cfg_locale = cfg['nws_conf']['locale-nonus']
-    
-cfg_locales = cfg_locale.split(",")
 
-# CONF: Watch Entire Region (Heads up outside your locale/county, increases frequency of checks when storms approaching).
-try:
-    cfg['alert_conf']['watch']
-except KeyError:
-    cfg_watch = "off"
-else:
-    cfg_watch = cfg['alert_conf']['watch']
+# Set The NON-US CAP Feed ID From: https://severeweather.wmo.int/v2/feeds.html
 
-# CONF: Audible Alert Voice (Uses espeak for text to speech)
-try:
-    cfg['alert_conf']['voice']
-except KeyError:
-    cfg_voice = "off"
-else:
-    cfg_voice = cfg['alert_conf']['voice']
+cfg_qrcodes         = cfg.get('nws_conf', 'qrcode', fallback='off')
+cfg_urlsht          = cfg.get('nws_conf', 'urlsht', fallback='off')
 
-# CONF: Audible Alert Siren (Uses alsa speaker test)
-try:
-    cfg['alert_conf']['alert']
-except KeyError:
-    cfg_alert = "off"
-else:
-    cfg_alert = cfg['alert_conf']['alert']
 
-# CONF: Audible Alert Siren Volume
-try:
-    cfg['alert_conf']['level']
-except KeyError:
-    cfg_level = "80"
-else:
-    cfg_level = cfg['alert_conf']['level']
+cfg_region_nonus    = cfg.get('nws_conf-nonus', 'region', fallback='PR')
+cfg_locale_nonus    = cfg.get('nws_conf-nonus', 'locale', fallback='Guarda,Vila Real')
+cfg_locales_nonus   = cfg_locale_nonus.split(",")
+cfg_feedid_nonus    = cfg.get('nws_conf-nonus', 'feedid', fallback='pt-ipma-pt')
+feed_nonus          = f"http://alert-feed.worldweather.org/{cfg_feedid_nonus.lower()}/rss.xml"
 
-# CONF: NWS Feed Backoff
-try:
-    cfg['alert_conf']['timer']
-except KeyError:
-    cfg_timer = "15"
-else:
-    cfg_timer = cfg['alert_conf']['timer']
-    
-# CONF: NWS Alert Trigger Words
-try:
-    cfg['nws_conf-nonus']['keywords']
-except KeyError:
-    cfg_kwords      = "fire Warning,forest-fire"
-    cfg_keywords    = cfg_kwords.split(",")
-else:
-    cfg_kwords      = cfg['nws_conf-nonus']['keywords']
-    cfg_keywords    = cfg_kwords.split(",")
-    
-# CONF: QR CODES
-try:
-    cfg['nws_conf']['qrcode']
-except KeyError:
-    cfg_qrcodes      = "off"
-else:
-    cfg_qrcodes      = cfg['nws_conf']['qrcode']
-    
-# CONF: SHORTEN URLS
-try:
-    cfg['nws_conf']['urlsht']
-except KeyError:
-    cfg_urlsht      = "off"
-else:
-    cfg_urlsht      = cfg['nws_conf']['urlsht']
+cfg_kwords_nonus    = cfg.get('nws_conf-nonus', 'keywords', fallback='heavy rain warning,heavy snow warning')
+cfg_keywords_nonus  = cfg_kwords_nonus.split(",")
+
+
+cfg_watch           = cfg.get('alert_conf', 'watch', fallback='off')
+cfg_voice           = cfg.get('alert_conf', 'voice', fallback='off')
+cfg_alert           = cfg.get('alert_conf', 'alert', fallback='off')
+cfg_level           = cfg.get('alert_conf', 'level', fallback='80')
+cfg_timer           = cfg.get('alert_conf', 'timer', fallback='15')
+
 
 
 cfg_log   = "/tmp/nws-nonus_seen.txt"
@@ -109,84 +45,91 @@ cfg_para  = ""
 
         
 # Main script
+data_exists = os.path.exists('/tmp/nws_data/nws_data-' + cfg_feedid_nonus.lower() + '.xml')
+if data_exists:
+    feed_age = subprocess.check_output('find /tmp/nws_data/nws_data-' + cfg_feedid_nonus.lower() + '.xml -mmin +' + cfg_timer, shell=True, universal_newlines=True)
+else:
+    os.system('touch /tmp/nws_data/nws_data-' + cfg_feedid_nonus.lower() + '.xml')
+    feed_age = "30"
 
-feed_xml = open("/home/lee/nz.xml", "r")
-feed_dat = feed_xml.read().replace("cap:", "cap_")
-feed_xml.close()
 
-blog_feed = feedparser.parse(feed_dat)
+if len(feed_age) > 0:
+    os.system('wget --quiet -O "/tmp/nws_data/nws_data-' + cfg_feedid_nonus.lower() + '.xml" ' + feed_nonus + '');
+    print("\n\n[-] Weather fetched [" + cfg_locale_nonus + ", " + cfg_region_nonus  + "]")
+else:
+    feed_now = float(time.time())
+    feed_dif = float(feed_now + (float(cfg_timer) * 60))
+    feed_nxt = datetime.fromtimestamp(feed_dif)
+    print("[-] Weather threat monitoring (" + cfg_locale_nonus + ", " + cfg_region_nonus + " - Next update: " + feed_nxt.strftime('%H:%M:%S') + ")")
 
-# READ THE FEED
-posts = blog_feed.entries
+if data_exists:
+    feed_xml = open('/tmp/nws_data/nws_data-' + cfg_feedid_nonus.lower() + '.xml', 'r')
+    feed_dat = feed_xml.read()
+    feed_xml.close()
+    alert_feed = feedparser.parse(feed_dat)
 
-# GO THROUGH THE FEED
-for post in posts:
     
-    areas = post.cap_areadesc.split(",")
-    for area in areas:
-        area_item = area.lower().strip()
-        for locale in cfg_locales:
-            locale_item = locale.strip()
-            print(locale_item.lower())
+    
+    
 
-            if locale_item.lower() in area_item:
+    # READ THE FEED
+    posts = alert_feed.entries
 
-                # READ THE SEEN ALERTS FILE (Cleared on system reboot, logout etc)
-                file = open(cfg_log, 'r')
-                lines = file.readlines()
+    #for x in range(len(posts)):
+        #print(posts[x])
 
-                # LOOK FOR SEEN ALERT ID's
-                n_seen = "no"
-                for line in lines:
-                    if post.id in line:
-                        n_seen = "yes"
+    #exit()
 
-                # CONTINUE IF ALERT NOT ALREADY SEEN        
-                if n_seen == "no":
-                    url = post.id
-                    cfg_tit = "Weather Alert For " + locale_item.upper() + "."
-                    cfg_msg = ""
-                    #print(cfg_msg)
+    # COLLECT EACH ALERT FILE
+    for post in posts:
 
-                    # SHORTEN URL FIRST ...
-                    # To create simpler QR Codes and shorter links in the notification text, change to off in config if tinyURL erroring
-                    if cfg_urlsht == "on":
-                        import pyshorteners
+        # LIMIT TO ABOUT A 24 HOUR PERIOD
+        dif = (int(round(time.time())) - int(time.strftime('%s', post.published_parsed)))      
+        if dif < 86400:
 
-                        shorten = pyshorteners.Shortener()
-                        url_sht = shorten.tinyurl.short(url)
-                        url = url_sht
+            data_exists = os.path.exists('/tmp/nws_data/nws-' + cfg_feedid_nonus.lower() + '_' + post.guid + '.xml')
+            if not data_exists:
+                os.system('wget --quiet -O "/tmp/nws_data/nws-' + cfg_feedid_nonus.lower() + '_' + post.guid + '.xml" ' + post.link + '');
 
-                    # GENERATE A QRCODE TO THE NWS ... 
-                    # Config on or off relates to showing QR in notifcation, so we get QR codes in the /tmp directory to serve
-                    import pyqrcode
-                    import png
-                    from pyqrcode import QRCode
 
-                    frl = "/tmp/qrcodes/nwsqr_" + post.cap_identifier + ".png"
-                    qrl = pyqrcode.create(url)
-                    qrl.png(frl, scale =10, module_color=[0, 0, 0, 255], background=[0xff, 0xff, 0xff])
+            file = open(cfg_log, 'r')
+            lines = file.readlines()
 
-                    if cfg_qrcodes == "on":
-                        cfg_script = cfg_cmd + ' --hint=string:image-path:'+frl+' --urgency=normal --category=im.received --icon=dialog-warning-symbolic "' + post.title + ' [ ' + locale_item.upper() + ' County ]" "' + cfg_msg + '"'
+            # LOOK FOR SEEN ALERT ID's
+            n_seen = "no"
+            for line in lines:
+                if post.guid in line:
+                    n_seen = "yes"
 
-                    else:
-                        if cfg_urlsht == "on":
-                            # SHORTEN URL
-                            cfg_script = cfg_cmd + ' --urgency=normal --category=im.received --icon=dialog-warning-symbolic "' + post.title + ' [ ' + locale_item.upper() + ' County ]" "' + cfg_msg + ' ' + url + '"'
 
-                        else:
-                            # USE NWS LONG URL
-                            cfg_script = cfg_cmd + ' --urgency=normal --category=im.received --icon=dialog-warning-symbolic "' + post.title + ' [ ' + locale_item.upper() + ' County ]" "' + cfg_msg + ' ' + post.id + '"'
 
-                    # TRIGGER NOTIFIY SEND
-                    #os.system(cfg_script)
-                    os.system('echo '+post.id+' >> '+cfg_log+'')
+            # CONTINUE IF ALERT NOT ALREADY SEEN        
+            if n_seen == "no":
+                os.system('echo '+post.guid+' >> '+cfg_log+'')
 
-                    # SOUND ALERT - only if title contains keywords defined in configuration and sound alerts enabled
-                    kfound = [fn for fn in cfg_keywords if(fn.lower() in post.cap_event.lower())]
-                    if bool(kfound):
-                        if cfg_alert == "on":
-                            os.system(cfg_sound)
-                        if cfg_voice == "on":
-                            os.system(cfg_start + cfg_tit + cfg_msg + cfg_end)
+                alert_cap = '/tmp/nws_data/nws-' + cfg_feedid_nonus.lower() + '_' + post.guid + '.xml'
+                alert_src = open(alert_cap, 'r').read()
+                alert_list = CAPParser(alert_src).as_dict()
+
+                alert = alert_list[0]["cap_info"]
+
+                for item in alert:
+                    alert_link          = item["cap_link"]
+                    alert_sender        = item["cap_sender_name"]
+                    alert_headline      = item["cap_headline"]
+                    alert_description   = item["cap_description"]
+                    alert_severity      = item["cap_severity"]
+
+                    for area in item["cap_area"]:
+                        alert_area      = area["area_description"]
+
+                if alert_severity != "Minor":
+                    if alert_area in cfg_locales_nonus:
+                        print(f"Headline: {alert_headline} Summary: {alert_description} Area: {alert_area} Link: {alert_link} Sender: {alert_sender}")
+
+                        cfg_script = f'{cfg_cmd} --urgency=normal --category=im.received --icon=dialog-warning-symbolic "{cfg_region_nonus}: {alert_headline} - {alert_severity}" "{alert_description} Areas: {alert_area} - {alert_sender} - {alert_link}"'
+
+
+                        #os.system(cfg_script)
+else:
+    print(f"Main RSS Feed not found for {cfg_feedid_nonus.lower()}")
