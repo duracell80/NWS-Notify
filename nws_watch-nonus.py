@@ -86,17 +86,21 @@ if cfg_enable_uk == "on":
             lines = file.readlines()
 
             # FIND UUID IN LINK TO USE AS ID
-            url_bits    = re.findall(r"([A-Za-z0-9\-]+)", post.guid)
-            post_guid   = url_bits[11]
-
+            url_bits    = post.guid.split("=")
+            post_region = url_bits[4]
+            post_guid   = url_bits[2].replace("&referrer", "")
+            post_guid_u = post_guid + post_region.lower().replace(" ", "")
+            post_date   = url_bits[1].replace("&id", "")
+            
             # LOOK FOR SEEN ALERT ID's
             n_seen = "no"
             for line in lines:
-                if post_guid in line:
+                if post_guid_u in line:
                     n_seen = "yes"
-
+            
             # RUN SCRIPT ONLY IF ALERT ID NOT SEEN IN LOG
             if n_seen == "no":
+                
 
                 # LOOK FOR KEYWORDS IN TITLE
                 kword_match = "no"
@@ -136,17 +140,17 @@ if cfg_enable_uk == "on":
                     qrl = pyqrcode.create(url)
                     qrl.png(frl, scale =10, module_color=[0, 0, 0, 255], background=[0xff, 0xff, 0xff])
 
-                    date_start = url_bits[9]
-                    date_items = date_start.split("-")
+                    date_items = post_date.split("-")
 
                     # PREVENT ALERTS SHOWING TOO FAR INTO THE FUTURE
                     # (Met Office can alert too early. Example extreme heat 5 days out, overloading notifications isn't good.)
-                    dif = (int(round(datetime(int(date_items[0]), int(date_items[1]), int(int(date_items[2]) - 1), 0, 0).timestamp())) - int(round(time.time())))      
+                    dif = (int(round(datetime(int(date_items[0]), int(date_items[1]), int(int(date_items[2]) - 0), 0, 0).timestamp())) - int(round(time.time())))      
 
+                    
                     if dif < 86400:
                         # AVOID LOGGING A SEEN EVENT UNTIL ACTUALLY SEEN
-                        os.system('echo '+post_guid+' >> '+cfg_log+'')
-
+                        
+                        print(f"\n\nHeadline: {post.title} Summary: {post.description} Area: {cfg_region_uk} Link: {url} Sender: UK Met Office")
                         # CHECK FOR QR AND SHORTENING
                         if cfg_qrcodes_uk == "on":
                             if cfg_urlsht_uk == "on":
@@ -156,10 +160,14 @@ if cfg_enable_uk == "on":
                         # FALL BACK ON LINK IN FEED
                         else:
                             cfg_script = f'{cfg_cmd} --urgency=normal --category=im.received --icon=dialog-warning-symbolic "{cfg_region_uk}: {post.title}" "{post.description} - UK Met Office - {url}"'
+                        
+                        os.system('echo '+post_guid_u+' >> '+cfg_log+'')
+                        os.system(cfg_script)
+                        
                     else:
-                        print(f"{post.title} - ( Too Early To Alert On - {date_start} )")
+                        print(f"{post.title} - ( Too Early To Alert On - {post_date} )")
 
-                    #os.system(cfg_script)
+                    
 
 
 
@@ -289,7 +297,7 @@ if cfg_enable_nonus == "on":
 
 
                     if alert_severity != "Minor" and area_seen == "yes":
-                        print(f"Headline: {alert_headline} Summary: {alert_description} Area: {alert_area} Link: {alert_link} Sender: {alert_sender}")
+                        print(f"\n\nHeadline: {alert_headline} Summary: {alert_description} Area: {alert_area} Link: {alert_link} Sender: {alert_sender}")
 
                         if not alert_area == "all":
                             cfg_script = f'{cfg_cmd} --urgency=normal --category=im.received --icon=dialog-warning-symbolic "{cfg_region_nonus}: {alert_headline} - {alert_severity}" "{alert_description} Areas: {alert_area} - {alert_sender} - {alert_link}"'
