@@ -147,19 +147,26 @@ if cfg_enable_uk == "on":
                     dif = (int(round(datetime(int(date_items[0]), int(date_items[1]), int(int(date_items[2]) - 0), 0, 0).timestamp())) - int(round(time.time())))      
 
                     
-                    if dif < 86400:
+                    if dif < 172800:
                         # AVOID LOGGING A SEEN EVENT UNTIL ACTUALLY SEEN
+                        
+                        if "red" in str(post.title).lower():
+                            post_urgency = "normal"
+                            post_icon = "dialog-warning-symbolic"
+                        else:
+                            post_urgency = "normal"
+                            post_icon = "dialog-warning-symbolic"
                         
                         print(f"\n\nHeadline: {post.title} Summary: {post.description} Area: {cfg_region_uk} Link: {url} Sender: UK Met Office")
                         # CHECK FOR QR AND SHORTENING
                         if cfg_qrcodes_uk == "on":
                             if cfg_urlsht_uk == "on":
-                                cfg_script = f'{cfg_cmd} --hint=string:image-path:{frl} --urgency=normal --category=im.received --icon=dialog-warning-symbolic "{cfg_region_uk}: {post.title}" "{post.description} - UK Met Office - {url}"'
+                                cfg_script = f'{cfg_cmd} --hint=string:image-path:{frl} --urgency={post_urgency} --category=im.received --icon={post_icon} "{cfg_region_uk}: {post.title}" "{post.description} - UK Met Office - {url}"'
                             else:
-                                cfg_script = f'{cfg_cmd} --hint=string:image-path:{frl} --urgency=normal --category=im.received --icon=dialog-warning-symbolic "{cfg_region_uk}: {post.title}" "{post.description} - UK Met Office"'
+                                cfg_script = f'{cfg_cmd} --hint=string:image-path:{frl} --urgency={post_urgency} --category=im.received --icon={post_icon} "{cfg_region_uk}: {post.title}" "{post.description} - UK Met Office"'
                         # FALL BACK ON LINK IN FEED
                         else:
-                            cfg_script = f'{cfg_cmd} --urgency=normal --category=im.received --icon=dialog-warning-symbolic "{cfg_region_uk}: {post.title}" "{post.description} - UK Met Office - {url}"'
+                            cfg_script = f'{cfg_cmd} --urgency={post_urgency} --category=im.received --icon={post_icon} "{cfg_region_uk}: {post.title}" "{post.description} - UK Met Office - {url}"'
                         
                         os.system('echo '+post_guid_u+' >> '+cfg_log+'')
                         os.system(cfg_script)
