@@ -16,13 +16,15 @@ cfg_alert           = cfg.get('alert_conf', 'alert', fallback='off')
 cfg_level           = cfg.get('alert_conf', 'level', fallback='80')
 cfg_timer           = cfg.get('alert_conf', 'timer', fallback='15')
 
+
 # FILE LOCATION AND COMMAND HEAD TAIL
 cfg_log   = "/tmp/nws-nonus_seen.txt"
 cfg_cmd   = "notify-send"
 cfg_start = 'espeak "'
 cfg_end   = '" -w /tmp/espeak-nonus-wx.wav -g 10 -p 50 -s 175 -v en-us && play /tmp/espeak-nonus-wx.wav'
 cfg_sound = "speaker-test -t sine -f 1000 -l 1 -S " + cfg_level + ""
-
+cfg_usloc = "/tmp/nws_data/nws_data.xml"
+cfg_ukloc = "/tmp/nws_data/nws_data-ukmetoffice.xml"
 
 # US CONFIGURATION (Primary Service - National Weather Service)
 cfg_enable          = cfg.get('nws_conf', 'enable', fallback='on')
@@ -33,7 +35,12 @@ if cfg_enable == "on":
     cfg_urlsht          = cfg.get('nws_conf', 'urlsht', fallback='off')
     cfg_kwords          = cfg.get('nws_conf', 'keywords', fallback='tornado warning,severe thunderstorm warning,hurricane warning,red flag,blizzard warning,sepcial weather statement,severe weather statement')
     cfg_keywords        = cfg_kwords.lower().split(",")
+    
+    cfg_region          = cfg.get('nws_conf', 'region', fallback='TN')
+    cfg_locale          = cfg.get('nws_conf', 'locale', fallback='Davidson,Williamson')
+    cfg_locales         = cfg_locale.lower().split(",")
 
+    
     
     
 # Main script - UK (MET OFFICE)
@@ -52,10 +59,13 @@ if cfg_enable_uk == "on":
     cfg_keywords_uk  = cfg_kwords_uk.lower().split(",")
 
     # CHECK FEED FILE EXISTS
-    data_exists = os.path.exists('/tmp/nws_data/nws_data-ukmetoffice.xml')
+    data_exists = os.path.exists(cfg_ukloc)
     if data_exists:
         os.system('touch /tmp/nws-nonus_seen.txt')
-        feed_age = subprocess.check_output('find /tmp/nws_data/nws_data-ukmetoffice.xml -mmin +' + cfg_timer, shell=True, universal_newlines=True)
+        if os.stat(cfg_ukloc).st_size == 0:
+            feed_age = "30"
+        else:
+            feed_age = subprocess.check_output('find /tmp/nws_data/nws_data-ukmetoffice.xml -mmin +' + cfg_timer, shell=True, universal_newlines=True)
     else:
         os.system('touch /tmp/nws-nonus_seen.txt')
         os.system('mkdir -p /tmp/nws_data')
@@ -168,8 +178,8 @@ if cfg_enable_uk == "on":
                         else:
                             cfg_script = f'{cfg_cmd} --urgency={post_urgency} --category=im.received --icon={post_icon} "{cfg_region_uk}: {post.title}" "{post.description} - UK Met Office - {url}"'
                         
-                        os.system('echo '+post_guid_u+' >> '+cfg_log+'')
-                        os.system(cfg_script)
+                        #os.system('echo '+post_guid_u+' >> '+cfg_log+'')
+                        #os.system(cfg_script)
                         
                     else:
                         print(f"{post.title} - ( Too Early To Alert On - {post_date} )")
@@ -195,21 +205,24 @@ cfg_enable_nonus    = cfg.get('nws_conf-nonus', 'enable', fallback='off')
 if cfg_enable_nonus == "on":
     cfg_region_nonus    = cfg.get('nws_conf-nonus', 'region', fallback='PR')
     cfg_locale_nonus    = cfg.get('nws_conf-nonus', 'locale', fallback='Guarda,Vila Real')
+    cfg_feedid_nonus    = cfg.get('nws_conf-nonus', 'feedid', fallback='pt-ipma-pt')
     if not cfg_locale_nonus == "all":
         cfg_locales_nonus   = cfg_locale_nonus.lower().split(",")
     else:
-        cfg_locales_nonus = "all,areas"
-    cfg_feedid_nonus    = cfg.get('nws_conf-nonus', 'feedid', fallback='pt-ipma-pt')
+        cfg_locales_nonus = "all,all"
     feed_nonus          = f"http://alert-feed.worldweather.org/{cfg_feedid_nonus.lower()}/rss.xml"
-    cfg_kwords_nonus    = cfg.get('nws_conf-nonus', 'keywords', fallback='heavy rain warning,heavy snow warning')
+    cfg_kwords_nonus    = cfg.get('nws_conf-nonus', 'keywords', fallback='thunderstorm,wind')
     cfg_keywords_nonus  = cfg_kwords_nonus.lower().split(",")
-
+    cfg_soundfor_nonus  = cfg.get('nws_conf-nonus', 'soundfor', fallback='thunderstorm,wind').lower().split(",")
 
     # Main script - WMO (NON-NWS)
     data_exists = os.path.exists('/tmp/nws_data/nws_data-' + cfg_feedid_nonus.lower() + '.xml')
     if data_exists:
         os.system('touch /tmp/nws-nonus_seen.txt')
-        feed_age = subprocess.check_output('find /tmp/nws_data/nws_data-' + cfg_feedid_nonus.lower() + '.xml -mmin +' + cfg_timer, shell=True, universal_newlines=True)
+        if os.stat('/tmp/nws_data/nws_data-' + cfg_feedid_nonus.lower() + '.xml').st_size == 0:
+            feed_age = "30"
+        else:
+            feed_age = subprocess.check_output('find /tmp/nws_data/nws_data-' + cfg_feedid_nonus.lower() + '.xml -mmin +' + cfg_timer, shell=True, universal_newlines=True)
     else:
         os.system('touch /tmp/nws-nonus_seen.txt')
         os.system('mkdir -p /tmp/nws_data')
@@ -231,10 +244,11 @@ if cfg_enable_nonus == "on":
         feed_dat = feed_xml.read()
         feed_xml.close()
         alert_feed = feedparser.parse(feed_dat)
-
+        alertsound_nonus = "no"
+        
         # READ THE FEED
         posts = alert_feed.entries
-
+        
         # DEBUG THE DICT
         #for x in range(len(posts)):
             #print(posts[x])
@@ -246,14 +260,24 @@ if cfg_enable_nonus == "on":
             
             # LOOK FOR KEYWORDS IN TITLE
             kword_match = "no"
-            for kword in range(len(cfg_keywords_nonus)):
-                if cfg_keywords_nonus[kword].lower() in post.title.lower():
-                    kword_match = "yes"
+            if cfg_kwords_nonus == "all":
+                kword_match = "yes"
+            else:
+                for kword in range(len(cfg_keywords_nonus)):
+                    if cfg_keywords_nonus[kword].lower() in post.title.lower():
+                        kword_match = "yes"
 
             # LIMIT TO ABOUT A 24 HOUR PERIOD
             dif = (int(round(time.time())) - int(time.strftime('%s', post.published_parsed)))      
             if dif < 86400 and post.category == "Met" and kword_match == "yes":
-
+                
+                # DEPLOY THE SIREN (ONLY ONCE) AT THE END OF THE LOOPS
+                # Thunderstorm warnings in Europe last a whole ass day, sirens may not be effective!
+                for tword in range(len(cfg_soundfor_nonus)):
+                    if cfg_soundfor_nonus[tword].lower() in post.title.lower():
+                        alertsound_nonus = "yes"
+                
+                # DIVE DEEPER INTO THE SINGLE CAP FILE
                 data_exists = os.path.exists('/tmp/nws_data/nws-' + cfg_feedid_nonus.lower() + '_' + post.guid + '.xml')
                 if not data_exists:
                     os.system('wget --quiet -O "/tmp/nws_data/nws-' + cfg_feedid_nonus.lower() + '_' + post.guid + '.xml" ' + post.link + '');
@@ -286,17 +310,19 @@ if cfg_enable_nonus == "on":
                         alert_headline      = item["cap_headline"]
                         alert_description   = item["cap_description"]
                         alert_severity      = item["cap_severity"]
-
+                        
                         if cfg_locale_nonus == "all":
                             area_seen   = "yes"
                             alert_area  = "all"
                         else:
                             for area in item["cap_area"]:
+                                
                                 if len(area["area_description"]) < 2:
                                     alert_areas      = str(area["area_description"]).lower()
                                     alert_area       = alert_areas
                                 else:
                                     alert_areas      = "multiple"
+                                    alert_area       = "all"
 
                                 for locale in cfg_locales_nonus:
                                     if locale in alert_areas:
@@ -304,13 +330,25 @@ if cfg_enable_nonus == "on":
 
 
                     if alert_severity != "Minor" and area_seen == "yes":
-                        print(f"\n\nHeadline: {alert_headline} Summary: {alert_description} Area: {alert_area} Link: {alert_link} Sender: {alert_sender}")
-
-                        if not alert_area == "all":
-                            cfg_script = f'{cfg_cmd} --urgency=normal --category=im.received --icon=dialog-warning-symbolic "{cfg_region_nonus}: {alert_headline} - {alert_severity}" "{alert_description} Areas: {alert_area} - {alert_sender} - {alert_link}"'
+                        print(f"\n\nDate: {post.published_parsed} Headline: {alert_headline} Summary: {alert_description} Area: {alert_area.upper()} Link: {alert_link} Sender: {alert_sender}")
+                        
+                        if "thunderstorm" in str(post.title).lower():
+                            post_urgency = "normal"
+                            post_icon = "weather-storm-symbolic"
                         else:
-                            cfg_script = f'{cfg_cmd} --urgency=normal --category=im.received --icon=dialog-warning-symbolic "{cfg_region_nonus}: {alert_headline} - {alert_severity}" "{alert_description} - {alert_sender} - {alert_link}"'
+                            post_urgency = "normal"
+                            post_icon = "dialog-warning-symbolic"
+                        
+                        if not alert_area == "all":
+                            cfg_script = f'{cfg_cmd} --urgency={post_urgency} --category=im.received --icon={post_icon} "{cfg_region_nonus} - {alert_areas.upper()}: {alert_headline}" "{alert_severity} - {alert_description} - {alert_sender} - {alert_link}"'
+                        else:
+                            cfg_script = f'{cfg_cmd} --urgency={post_urgency} --category=im.received --icon={post_icon} "{cfg_region_nonus}: {alert_headline} - {alert_severity}" "Areas: {alert_areas.upper()} - {alert_description} - {alert_sender} - {alert_link}"'
 
                         os.system(cfg_script)
+                        
+        # SOUND ALERT
+        if cfg_alert == "on" and alertsound_nonus == "yes":
+            print(f'sound alert active')
+            #os.system(cfg_sound)
     else:
         print(f"Main RSS Feed not found for {cfg_feedid_nonus.lower()}")
