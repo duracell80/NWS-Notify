@@ -178,8 +178,8 @@ if cfg_enable_uk == "on":
                         else:
                             cfg_script = f'{cfg_cmd} --urgency={post_urgency} --category=im.received --icon={post_icon} "{cfg_region_uk}: {post.title}" "{post.description} - UK Met Office - {url}"'
                         
-                        #os.system('echo '+post_guid_u+' >> '+cfg_log+'')
-                        #os.system(cfg_script)
+                        os.system('echo '+post_guid_u+' >> '+cfg_log+'')
+                        os.system(cfg_script)
                         
                     else:
                         print(f"{post.title} - ( Too Early To Alert On - {post_date} )")
@@ -271,7 +271,7 @@ if cfg_enable_nonus == "on":
             dif = (int(round(time.time())) - int(time.strftime('%s', post.published_parsed)))      
             if dif < 86400 and post.category == "Met" and kword_match == "yes":
                 
-                # DEPLOY THE SIREN (ONLY ONCE) AT THE END OF THE LOOPS
+                # DEPLOY THE SIREN (ONLY ONCE) AT THE END OF THE LOOPS IF KEYWORDS FOUND
                 # Thunderstorm warnings in Europe last a whole ass day, sirens may not be effective!
                 for tword in range(len(cfg_soundfor_nonus)):
                     if cfg_soundfor_nonus[tword].lower() in post.title.lower():
