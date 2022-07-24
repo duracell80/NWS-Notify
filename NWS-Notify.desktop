@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Exec=/usr/share/nws_alerts/nws_alerts.sh
+X-GNOME-Autostart-enabled=true
+NoDisplay=false
+Hidden=false
+Name[en_US]=NWS-Notify
+Comment[en_US]=Weather Alerts from the National Weather service
+X-GNOME-Autostart-Delay=60

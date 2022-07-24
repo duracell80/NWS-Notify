@@ -15,7 +15,6 @@ mkdir -p /tmp/nws_data
 sudo chmod a+x nws_watch.py
 sudo chmod a+rw nws_seen.txt
 sudo chmod a+x nws_alerts.sh
-sudo chmod a+x nws_alerts.service
 sudo chmod a+rw nws_data.xml
 sudo chmod a+r config.ini
 
@@ -30,3 +29,5 @@ cp config.ini ~/.nws_alerts
 cp nws_seen.txt /tmp
 cp nws_seen.txt /tmp/nws-nonus_seen.txt
 sudo cp web_server.py /usr/share/nws_alerts
+
+cp NWS-Notify.desktop ~/.config/autostart
