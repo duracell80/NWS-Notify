@@ -10,8 +10,9 @@ sudo pip3 install pypng
 sudo pip3 install pyshorteners
 
 
-mkdir -p ~/.nws_alerts
+mkdir -p ~/.local/share/nws_alerts
 mkdir -p /tmp/nws_data
+mkdir -p /tmp/qrcodes
 sudo chmod a+x nws_watch.py
 sudo chmod a+rw nws_seen.txt
 sudo chmod a+x nws_alerts.sh
@@ -24,8 +25,7 @@ sudo cp nws_watch.py /usr/share/nws_alerts
 sudo cp nws_alerts.sh /usr/share/nws_alerts
 sudo cp nws_data.xml /tmp/nws_data.xml
 sudo cp nws_data.xml /tmp/nws-nonus_data.xml
-sudo cp config.ini /usr/share/nws_alerts
-cp config.ini ~/.nws_alerts
+cp config.ini ~/.local/share/nws_alerts
 cp nws_seen.txt /tmp
 cp nws_seen.txt /tmp/nws-nonus_seen.txt
 sudo cp web_server.py /usr/share/nws_alerts
