@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os, subprocess, time, configparser, feedparser, pandas
 from datetime import datetime
 
