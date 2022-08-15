@@ -34,7 +34,11 @@ sudo chmod a+rw /tmp/nws-nonus_data.xml
 sudo chmod a+rw /tmp/nws_seen.txt
 sudo chmod a+rw /tmp/nws_data.xml
 
+sed -i "s|#478db2|${MAINSHADE_HEX}|g" NWS-Notify.desktop
+
 cp NWS-Notify.desktop ~/.config/autostart
+sed -i "s|~/.local|${HOME}/.local|g" ~/.config/autostart/NWS-Notify.desktop
+
 chmod u+x wx_check.sh
 cp wx_check.sh ~/.local/bin/wx_check
 
