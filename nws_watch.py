@@ -16,8 +16,6 @@ cfg.read(FILE_CONF)
 
 
 # GENERAL CONFIGURATION
-cfg_voice           = cfg.get('alert_conf', 'voice', fallback='off')
-cfg_alert           = cfg.get('alert_conf', 'alert', fallback='off')
 cfg_level           = cfg.get('alert_conf', 'level', fallback='80')
 cfg_timer           = cfg.get('alert_conf', 'timer', fallback='15')
 cfg_para            = ""
@@ -33,10 +31,11 @@ cfg_usloc = "/tmp/nws_data/nws_data.xml"
 cfg_ukloc = "/tmp/nws_data/nws_data-ukmetoffice.xml"
 
 # US CONFIGURATION (Primary Service - National Weather Service)
-cfg_enable          = cfg.get('nws_conf', 'enable', fallback='on')
+cfg_us_enable          = cfg.get('nws_conf', 'enable', fallback='on')
 
 # US MAIN SCRIPT
-if cfg_enable == "on":
+if cfg_us_enable == "on":
+    cfg_us_log          = "/tmp/nws_seen.txt"
     cfg_qrcodes         = cfg.get('nws_conf', 'qrcode', fallback='off')
     cfg_urlsht          = cfg.get('nws_conf', 'urlsht', fallback='off')
     cfg_kwords          = cfg.get('nws_conf', 'keywords', fallback='tornado warning,severe thunderstorm warning,hurricane warning,red flag,blizzard warning,sepcial weather statement,severe weather statement')
@@ -49,6 +48,9 @@ if cfg_enable == "on":
     
     cfg_locale_watch    = cfg.get('nws_conf', 'locale_watch', fallback='Dickson,Cheatham,Wilson,Williamson,Robertson,Rutherford,Sumner,Montgomery')
     cfg_locales_watch   = cfg_locale_watch.lower().split(",")
+    
+    cfg_us_voice           = cfg.get('nws_conf', 'voice', fallback='off')
+    cfg_us_alert           = cfg.get('nws_conf', 'alert', fallback='off')
 
     # CHECK FOR DATA FILE
     data_exists = os.path.exists('/tmp/nws_data.xml')
@@ -118,8 +120,8 @@ if cfg_enable == "on":
     else:
         os.system('touch /tmp/nws_data.xml')
         os.system('chmod a+rw /tmp/nws_data.xml')
-        os.system('touch /tmp/nws_seen.txt')
-        os.system('chmod a+rw /tmp/nws_seen.txt')
+        os.system('touch ' + cfg_us_log)
+        os.system('chmod a+rw ' + cfg_us_log)
         
 # READ US FEED
 feed_xml = open("/tmp/nws_data.xml", "r")
@@ -202,9 +204,9 @@ for post in posts:
                         # SOUND ALERT - only if title contains keywords defined in configuration and sound alerts enabled
                         kfound = [fn for fn in cfg_keywords if(fn.lower() in post.cap_event.lower())]
                         if bool(kfound):
-                            if cfg_alert == "on":
+                            if cfg_us_alert == "on":
                                 os.system(cfg_sound)
-                            if cfg_voice == "on":
+                            if cfg_us_voice == "on":
                                 os.system(cfg_start + cfg_tit + cfg_msg + cfg_end)
 
                             
@@ -502,7 +504,7 @@ if cfg_enable_nonus == "on":
 
 
                     if alert_severity != "Minor" and area_seen == "yes":
-                        print(f"\n\nDate: {post.published_parsed} Headline: {alert_headline} Summary: {alert_description} Area: {alert_area.upper()} Link: {alert_link} Sender: {alert_sender}")
+                        #print(f"\n\nDate: {post.published_parsed} Headline: {alert_headline} Summary: {alert_description} Area: {alert_area.upper()} Link: {alert_link} Sender: {alert_sender}")
                         
                         if "thunderstorm" in str(post.title).lower():
                             post_urgency = "normal"
@@ -518,9 +520,5 @@ if cfg_enable_nonus == "on":
 
                         os.system(cfg_script)
                         
-        # SOUND ALERT
-        if cfg_alert == "on" and alertsound_nonus == "yes":
-            print(f'sound alert active')
-            #os.system(cfg_sound)
     else:
         print(f"Main RSS Feed not found for {cfg_feedid_nonus.lower()}")

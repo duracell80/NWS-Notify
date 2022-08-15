@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Exec=/usr/share/nws_alerts/nws_alerts.sh
+Exec=~/.local/share/nws_alerts/nws_alerts.sh
 X-GNOME-Autostart-enabled=true
 NoDisplay=false
 Hidden=false
