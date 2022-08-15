@@ -6,4 +6,4 @@ NoDisplay=false
 Hidden=false
 Name[en_US]=NWS-Notify
 Comment[en_US]=Weather Alerts from the National Weather service
-X-GNOME-Autostart-Delay=60
+X-GNOME-Autostart-Delay=45
