@@ -7,9 +7,6 @@ from capparselib.parsers import CAPParser
 
 
 
-
-
-
 global HOME
 HOME = str(os.popen('echo $HOME').read()).replace('\n', '')
 FILE_CONF = HOME + '/.local/share/nws_alerts/config.ini'
@@ -37,6 +34,12 @@ cfg_ukloc = "/tmp/nws_data/nws_data-ukmetoffice.xml"
 # US CONFIGURATION (Primary Service - National Weather Service)
 cfg_us_enable          = cfg.get('nws_conf', 'enable', fallback='on')
 
+
+
+
+
+
+
 # US MAIN SCRIPT
 if cfg_us_enable == "on":
     cfg_us_log          = "/tmp/nws_seen.txt"
@@ -57,7 +60,7 @@ if cfg_us_enable == "on":
     cfg_us_alert           = cfg.get('nws_conf', 'alert', fallback='off')
     cfg_us_dopower         = "no"
     cfg_us_shutdown        = cfg.get('nws_conf', 'shutdown', fallback='off')
-    cfg_us_shutdown_script = 'shutdown -h 00:05 "[!] Storm detected nearby. Shutdown scheduled to protect device against power disruption, please complete your work"'
+    
     
     # CHECK FOR DATA FILE
     data_exists = os.path.exists('/tmp/nws_data.xml')
@@ -155,7 +158,7 @@ for post in posts:
                 if locale_item.lower() in area_item:
 
                     # READ THE SEEN ALERTS FILE (Cleared on system reboot, logout etc)
-                    file = open(cfg_log, 'r')
+                    file = open(cfg_us_log, 'r')
                     lines = file.readlines()
 
                     # LOOK FOR SEEN ALERT ID's
@@ -229,13 +232,11 @@ for post in posts:
 # Not reliable globally since not all weather alerts around the world offer immediate storm warnings
 if cfg_us_dopower == "yes":
     print("[i] Potenitally destructive weather is near by!")
-    #os.system('zenity --warning --text="Potenitally destructive weather is near by!" --timeout 15')
     if cfg_us_shutdown == "on":
-        QUESTION = str(os.system('zenity --question --no-wrap --default-cancel --timeout 180 --text="Do you wish to shutdown your system?"'))
+        QUESTION = str(os.system('zenity --question --no-wrap --default-cancel --timeout 180 --text="Potenitally destructive weather is near by! \n\nDo you wish to shutdown your system?"'))
         if QUESTION == "0":
-            os.system(cfg_us_shutdown_script)
-            os.system('zenity --warning --no-wrap --timeout 180 --text="Your system will shutdown in 5 minutes, save your work!"')
-                            
+            os.system("shutdown -h 00:05")
+            os.system('zenity --warning --no-wrap --timeout 180 --text="Please save your work during the next 5 minutes! \nUse shutdown -c to cancel"')         
                             
                             
                             
