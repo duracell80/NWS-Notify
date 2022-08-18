@@ -43,7 +43,7 @@ chmod u+x wx_check.sh
 cp wx_check.sh ~/.local/bin/wx_check
 
 
-sudo apt-get install wget espeak python3-pip
+sudo apt-get install wget espeak python3-pip zenity
 
 sudo pip3 install configparser
 sudo pip3 install feedparser

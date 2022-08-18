@@ -6,6 +6,10 @@ from datetime import datetime
 from capparselib.parsers import CAPParser
 
 
+
+
+
+
 global HOME
 HOME = str(os.popen('echo $HOME').read()).replace('\n', '')
 FILE_CONF = HOME + '/.local/share/nws_alerts/config.ini'
@@ -51,7 +55,10 @@ if cfg_us_enable == "on":
     
     cfg_us_voice           = cfg.get('nws_conf', 'voice', fallback='off')
     cfg_us_alert           = cfg.get('nws_conf', 'alert', fallback='off')
-
+    cfg_us_dopower         = "no"
+    cfg_us_shutdown        = cfg.get('nws_conf', 'shutdown', fallback='off')
+    cfg_us_shutdown_script = 'shutdown -h 00:05 "[!] Storm detected nearby. Shutdown scheduled to protect device against power disruption, please complete your work"'
+    
     # CHECK FOR DATA FILE
     data_exists = os.path.exists('/tmp/nws_data.xml')
 
@@ -61,7 +68,7 @@ if cfg_us_enable == "on":
         # CHECK OUTSIDE AREA FOR APPROACHING THUNDERSTORMS IF watch=on
         if cfg_watch == "on":
             # READ THE SEEN ALERTS FILE (Cleared on system reboot, logout etc)
-            file = open(cfg_log, 'r')
+            file = open(cfg_us_log, 'r')
             lines = file.readlines()
 
             # BALANCE SAFETY WITH SERVER LOAD
@@ -90,7 +97,7 @@ if cfg_us_enable == "on":
                         if a_seen == "no":
                             if post.cap_areadesc.lower() in cfg_locale_watch.lower():
                                 cfg_para+= "Storms: " + post.cap_areadesc.upper() + "\n"
-                                os.system('echo '+post.id+' >> '+cfg_log+'')
+                                os.system('echo '+post.id+' >> '+cfg_us_log+'')
 
 
                 if len(cfg_para) > 0:
@@ -132,6 +139,7 @@ blog_feed = feedparser.parse(feed_dat)
 
 # READ THE FEED
 posts = blog_feed.entries
+
 
 # GO THROUGH THE FEED
 for post in posts:
@@ -199,8 +207,14 @@ for post in posts:
 
                         # TRIGGER NOTIFIY SEND
                         os.system(cfg_script)
-                        os.system('echo '+post.id+' >> '+cfg_log+'')
+                        os.system('echo '+post.id+' >> '+cfg_us_log+'')
 
+                        # TRIGGER THE SYSTEM SHUTDOWN PROMPT FOR STORM AND TORNADO WARNINGS
+                        if ("Tornado Warning") in post.title:
+                            cfg_us_dopower = "yes"
+                        if ("Heat") in post.title:
+                            cfg_us_dopower = "yes"
+                        
                         # SOUND ALERT - only if title contains keywords defined in configuration and sound alerts enabled
                         kfound = [fn for fn in cfg_keywords if(fn.lower() in post.cap_event.lower())]
                         if bool(kfound):
@@ -211,7 +225,16 @@ for post in posts:
 
                             
                             
-                            
+# SHUTDOWN ON SEVERE STORM IN US ONLY
+# Not reliable globally since not all weather alerts around the world offer immediate storm warnings
+if cfg_us_dopower == "yes":
+    print("[i] Potenitally destructive weather is near by!")
+    #os.system('zenity --warning --text="Potenitally destructive weather is near by!" --timeout 15')
+    if cfg_us_shutdown == "on":
+        QUESTION = str(os.system('zenity --question --no-wrap --default-cancel --timeout 180 --text="Do you wish to shutdown your system?"'))
+        if QUESTION == "0":
+            os.system(cfg_us_shutdown_script)
+            os.system('zenity --warning --no-wrap --timeout 180 --text="Your system will shutdown in 5 minutes, save your work!"')
                             
                             
                             
@@ -363,7 +386,8 @@ if cfg_enable_uk == "on":
 
 
     else:
-        print(f"Main RSS Feed not found for {feed_uk}")    
+        print(f"Main RSS Feed not found for {feed_uk}")
+        os.system('zenity --error --text="Main RSS Feed not found for ' + feed_uk + '"')
     
 
 
@@ -522,3 +546,4 @@ if cfg_enable_nonus == "on":
                         
     else:
         print(f"Main RSS Feed not found for {cfg_feedid_nonus.lower()}")
+        os.system('zenity --error --text="Main RSS Feed not found for ' + cfg_feedid_nonus.lower() + '"')
