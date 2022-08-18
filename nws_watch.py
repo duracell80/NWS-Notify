@@ -215,7 +215,7 @@ for post in posts:
                         # TRIGGER THE SYSTEM SHUTDOWN PROMPT FOR STORM AND TORNADO WARNINGS
                         if ("Tornado Warning") in post.title:
                             cfg_us_dopower = "yes"
-                        if ("Heat") in post.title:
+                        if ("Severe Thunderstorm Warning") in post.title:
                             cfg_us_dopower = "yes"
                         
                         # SOUND ALERT - only if title contains keywords defined in configuration and sound alerts enabled
@@ -388,7 +388,7 @@ if cfg_enable_uk == "on":
 
     else:
         print(f"Main RSS Feed not found for {feed_uk}")
-        os.system('zenity --error --text="Main RSS Feed not found for ' + feed_uk + '"')
+        #os.system('zenity --error --text="Main RSS Feed not found for ' + feed_uk + '"')
     
 
 
@@ -547,4 +547,4 @@ if cfg_enable_nonus == "on":
                         
     else:
         print(f"Main RSS Feed not found for {cfg_feedid_nonus.lower()}")
-        os.system('zenity --error --text="Main RSS Feed not found for ' + cfg_feedid_nonus.lower() + '"')
+        #os.system('zenity --error --text="Main RSS Feed not found for ' + cfg_feedid_nonus.lower() + '"')
