@@ -9,7 +9,7 @@ echo  "National Weather Service Notifications - Looping mode - every 5 to 15 min
 mkdir -p $DIR_QCODE
 #$HOME/.local/nws_alerts/web_server.py&
 
-notify-send --urgency=low --category=im.received --icon=help-info-symbolic "Weather Alerts Active" "Vist the Startup Applications to turn off for next login."
+notify-send --urgency=low --category=im.received --icon=help-info-symbolic "Weather Alerts Active" "Visit the Startup Applications to turn off for next login."
 
 
 while true

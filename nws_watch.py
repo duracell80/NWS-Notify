@@ -49,6 +49,8 @@ if cfg_us_enable == "on":
     cfg_urlsht          = cfg.get('nws_conf', 'urlsht', fallback='off')
     cfg_kwords          = cfg.get('nws_conf', 'keywords', fallback='tornado warning,severe thunderstorm warning,hurricane warning,red flag,blizzard warning,sepcial weather statement,severe weather statement')
     cfg_keywords        = cfg_kwords.lower().split(",")
+    cfg_us_alertfor     = cfg.get('nws_conf', 'alertfor', fallback='severe thunderstorm,tornado warning,dust storm warning')
+    cfg_us_alertkeys    = cfg_us_alertfor.lower().split(",")
     
     cfg_region          = cfg.get('nws_conf', 'region', fallback='TN')
     cfg_locale          = cfg.get('nws_conf', 'locale_main', fallback='Davidson,Williamson')
@@ -221,7 +223,7 @@ for post in posts:
                             cfg_us_dopower = "yes"
                         
                         # SOUND ALERT - only if title contains keywords defined in configuration and sound alerts enabled
-                        kfound = [fn for fn in cfg_keywords if(fn.lower() in post.cap_event.lower())]
+                        kfound = [fn for fn in cfg_us_alertkeys if(fn.lower() in post.cap_event.lower())]
                         if bool(kfound):
                             if cfg_us_alert == "on":
                                 os.system(cfg_sound)
