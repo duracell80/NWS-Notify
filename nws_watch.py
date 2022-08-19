@@ -10,6 +10,8 @@ from capparselib.parsers import CAPParser
 global HOME
 HOME = str(os.popen('echo $HOME').read()).replace('\n', '')
 FILE_CONF = HOME + '/.local/share/nws_alerts/config.ini'
+DIR_ASSET = HOME + '/.local/share/nws_alerts/assets'
+DIR_WDATA = HOME + '/.local/share/nws_alerts/assets/data'
 
 cfg = configparser.ConfigParser()
 cfg.sections()
@@ -23,13 +25,13 @@ cfg_para            = ""
 
 
 # FILE LOCATION AND COMMAND HEAD TAIL
-cfg_log   = "/tmp/nws-nonus_seen.txt"
+cfg_log   = DIR_WDATA + "/nws-nonus_seen.txt"
 cfg_cmd   = "notify-send"
 cfg_start = 'espeak "'
-cfg_end   = '" -w /tmp/espeak-nonus-wx.wav -g 10 -p 50 -s 175 -v en-us && play /tmp/espeak-nonus-wx.wav'
+cfg_end   = '" -w '+ DIR_ASSET +'/espeak-wx.wav -g 10 -p 50 -s 175 -v en-us && play '+ DIR_ASSET +'/espeak-wx.wav'
 cfg_sound = "speaker-test -t sine -f 1000 -l 1 -S " + cfg_level + ""
-cfg_usloc = "/tmp/nws_data/nws_data.xml"
-cfg_ukloc = "/tmp/nws_data/nws_data-ukmetoffice.xml"
+cfg_usloc = DIR_WDATA + "/nws_data.xml"
+cfg_ukloc = DIR_WDATA + "/nws_data-ukmetoffice.xml"
 
 # US CONFIGURATION (Primary Service - National Weather Service)
 cfg_us_enable          = cfg.get('nws_conf', 'enable', fallback='on')
@@ -42,7 +44,7 @@ cfg_us_enable          = cfg.get('nws_conf', 'enable', fallback='on')
 
 # US MAIN SCRIPT
 if cfg_us_enable == "on":
-    cfg_us_log          = "/tmp/nws_seen.txt"
+    cfg_us_log          = DIR_WDATA + "/nws_seen.txt"
     cfg_qrcodes         = cfg.get('nws_conf', 'qrcode', fallback='off')
     cfg_urlsht          = cfg.get('nws_conf', 'urlsht', fallback='off')
     cfg_kwords          = cfg.get('nws_conf', 'keywords', fallback='tornado warning,severe thunderstorm warning,hurricane warning,red flag,blizzard warning,sepcial weather statement,severe weather statement')
@@ -63,7 +65,7 @@ if cfg_us_enable == "on":
     
     
     # CHECK FOR DATA FILE
-    data_exists = os.path.exists('/tmp/nws_data.xml')
+    data_exists = os.path.exists(DIR_WDATA + '/nws_data.xml')
 
     if data_exists:       
         
@@ -75,7 +77,7 @@ if cfg_us_enable == "on":
             lines = file.readlines()
 
             # BALANCE SAFETY WITH SERVER LOAD
-            feed_xml = open("/tmp/nws_data.xml", "r")
+            feed_xml = open(DIR_WDATA + "/nws_data.xml", "r")
             feed_dat = feed_xml.read().replace("cap:", "cap_")
             feed_xml.close()
             
@@ -114,11 +116,11 @@ if cfg_us_enable == "on":
 
 
             feed_url = "https://alerts.weather.gov/cap/"+ cfg_region.lower() +".php?x=0"
-            feed_age = subprocess.check_output('find /tmp/nws_data.xml -mmin +' + cfg_timer, shell=True, universal_newlines=True)
+            feed_age = subprocess.check_output('find '+ DIR_WDATA +'/nws_data.xml -mmin +' + cfg_timer, shell=True, universal_newlines=True)
 
             # CHECK THE AGE OF THE DATA
             if len(feed_age) > 0:
-                os.system('wget --quiet -O "/tmp/nws_data.xml" ' + feed_url + '');
+                os.system('wget --quiet -O "'+ DIR_WDATA +'/nws_data.xml" ' + feed_url + '');
                 print("\n\n[-] Weather fetched from NWS [" + cfg_locale + ", " + cfg_region  + "]")
             else:
                 feed_now = float(time.time())
@@ -128,13 +130,13 @@ if cfg_us_enable == "on":
         
     # DATA FILE DOESNT EXIST
     else:
-        os.system('touch /tmp/nws_data.xml')
-        os.system('chmod a+rw /tmp/nws_data.xml')
+        os.system('touch ' + DIR_WDATA + '/nws_data.xml')
+        os.system('chmod a+rw ' + DIR_WDATA + '/nws_data.xml')
         os.system('touch ' + cfg_us_log)
         os.system('chmod a+rw ' + cfg_us_log)
         
 # READ US FEED
-feed_xml = open("/tmp/nws_data.xml", "r")
+feed_xml = open(DIR_WDATA + "/nws_data.xml", "r")
 feed_dat = feed_xml.read().replace("cap:", "cap_")
 feed_xml.close()
 
@@ -191,7 +193,7 @@ for post in posts:
 
                         url_bits = post.id.split("?x=")
 
-                        frl = "/tmp/qrcodes/nwsqr_" + url_bits[1] + ".png"
+                        frl = DIR_ASSET + "/qrcodes/nwsqr_" + url_bits[1] + ".png"
                         qrl = pyqrcode.create(url)
                         qrl.png(frl, scale =10, module_color=[0, 0, 0, 255], background=[0xff, 0xff, 0xff])
 
@@ -259,20 +261,22 @@ if cfg_enable_uk == "on":
     # CHECK FEED FILE EXISTS
     data_exists = os.path.exists(cfg_ukloc)
     if data_exists:
-        os.system('touch /tmp/nws-nonus_seen.txt')
+        os.system('touch '+ DIR_WDATA +'/nws-uk_seen.txt')
         if os.stat(cfg_ukloc).st_size == 0:
             feed_age = "30"
         else:
-            feed_age = subprocess.check_output('find /tmp/nws_data/nws_data-ukmetoffice.xml -mmin +' + cfg_timer, shell=True, universal_newlines=True)
+            feed_age = subprocess.check_output('find '+ DIR_WDATA +'/nws_data-ukmetoffice.xml -mmin +' + cfg_timer, shell=True, universal_newlines=True)
     else:
-        os.system('touch /tmp/nws-nonus_seen.txt')
-        os.system('mkdir -p /tmp/nws_data')
-        os.system('touch /tmp/nws_data/nws_data-ukmetoffice.xml')
+        os.system('touch '+ DIR_WDATA +'/nws-uk_seen.txt')
+        os.system('touch '+ DIR_WDATA +'/nws_data-ukmetoffice.xml')
+        
+        os.system('chmod a+rw '+ DIR_WDATA +'/nws-uk_seen.txt')
+        os.system('chmod a+rw '+ DIR_WDATA +'/nws_data-ukmetoffice.xml')
         feed_age = "30"
 
     # ALLOW FOR BACK OFF IN CHECKING SERVICE
     if len(feed_age) > 0:
-        os.system('wget --quiet -O "/tmp/nws_data/nws_data-ukmetoffice.xml" ' + feed_uk + '');
+        os.system('wget --quiet -O "'+ DIR_WDATA +'/nws_data-ukmetoffice.xml" ' + feed_uk + '');
         print("\n\n[-] Weather fetched [ UK MET OFFICE ]")
     else:
         feed_now = float(time.time())
@@ -281,7 +285,7 @@ if cfg_enable_uk == "on":
         print("[-] Weather threat monitoring (" + cfg_locale_uk + ", " + cfg_region_uk + " - Next update: " + feed_nxt.strftime('%H:%M:%S') + ")")
 
     if data_exists:
-        feed_xml = open('/tmp/nws_data/nws_data-ukmetoffice.xml', 'r')
+        feed_xml = open(DIR_WDATA + '/nws_data-ukmetoffice.xml', 'r')
         feed_dat = feed_xml.read()
         feed_xml.close()
         alert_feed = feedparser.parse(feed_dat)
@@ -344,7 +348,7 @@ if cfg_enable_uk == "on":
 
 
 
-                    frl = "/tmp/qrcodes/nwsqr_" + post_guid + ".png"
+                    frl = DIR_ASSET + "/qrcodes/nwsqr_" + post_guid + ".png"
                     qrl = pyqrcode.create(url)
                     qrl.png(frl, scale =10, module_color=[0, 0, 0, 255], background=[0xff, 0xff, 0xff])
 
@@ -415,22 +419,25 @@ if cfg_enable_nonus == "on":
     cfg_soundfor_nonus  = cfg.get('nws_conf-nonus', 'soundfor', fallback='thunderstorm,wind').lower().split(",")
 
     # Main script - WMO (NON-NWS)
-    data_exists = os.path.exists('/tmp/nws_data/nws_data-' + cfg_feedid_nonus.lower() + '.xml')
+    data_exists = os.path.exists(DIR_WDATA + '/nws_data-' + cfg_feedid_nonus.lower() + '.xml')
     if data_exists:
-        os.system('touch /tmp/nws-nonus_seen.txt')
-        if os.stat('/tmp/nws_data/nws_data-' + cfg_feedid_nonus.lower() + '.xml').st_size == 0:
+        os.system('touch '+ DIR_WDATA +'/nws-nonus_seen.txt')
+        os.system('chmod a+rw '+ DIR_WDATA +'/nws-nonus_seen.txt')
+        if os.stat(DIR_WDATA + '/nws_data-' + cfg_feedid_nonus.lower() + '.xml').st_size == 0:
             feed_age = "30"
         else:
-            feed_age = subprocess.check_output('find /tmp/nws_data/nws_data-' + cfg_feedid_nonus.lower() + '.xml -mmin +' + cfg_timer, shell=True, universal_newlines=True)
+            feed_age = subprocess.check_output('find '+ DIR_WDATA +'/nws_data-' + cfg_feedid_nonus.lower() + '.xml -mmin +' + cfg_timer, shell=True, universal_newlines=True)
     else:
-        os.system('touch /tmp/nws-nonus_seen.txt')
-        os.system('mkdir -p /tmp/nws_data')
-        os.system('touch /tmp/nws_data/nws_data-' + cfg_feedid_nonus.lower() + '.xml')
+        os.system('touch '+ DIR_WDATA +'/nws-nonus_seen.txt')
+        os.system('touch '+ DIR_WDATA +'/nws_data-' + cfg_feedid_nonus.lower() + '.xml')
+        
+        os.system('chmod a+rw '+ DIR_WDATA +'/nws-nonus_seen.txt')
+        os.system('chmod a+rw '+ DIR_WDATA +'/nws_data-' + cfg_feedid_nonus.lower() + '.xml')
         feed_age = "30"
 
 
     if len(feed_age) > 0:
-        os.system('wget --quiet -O "/tmp/nws_data/nws_data-' + cfg_feedid_nonus.lower() + '.xml" ' + feed_nonus + '');
+        os.system('wget --quiet -O "'+ DIR_WDATA +'/nws_data-' + cfg_feedid_nonus.lower() + '.xml" ' + feed_nonus + '');
         print("\n\n[-] Weather fetched [" + cfg_locale_nonus + ", " + cfg_region_nonus  + "]")
     else:
         feed_now = float(time.time())
@@ -439,7 +446,7 @@ if cfg_enable_nonus == "on":
         print("[-] Weather threat monitoring (" + cfg_locale_nonus + ", " + cfg_region_nonus + " - Next update: " + feed_nxt.strftime('%H:%M:%S') + ")")
 
     if data_exists:
-        feed_xml = open('/tmp/nws_data/nws_data-' + cfg_feedid_nonus.lower() + '.xml', 'r')
+        feed_xml = open(DIR_WDATA + '/nws_data-' + cfg_feedid_nonus.lower() + '.xml', 'r')
         feed_dat = feed_xml.read()
         feed_xml.close()
         alert_feed = feedparser.parse(feed_dat)
@@ -477,9 +484,9 @@ if cfg_enable_nonus == "on":
                         alertsound_nonus = "yes"
                 
                 # DIVE DEEPER INTO THE SINGLE CAP FILE
-                data_exists = os.path.exists('/tmp/nws_data/nws-' + cfg_feedid_nonus.lower() + '_' + post.guid + '.xml')
+                data_exists = os.path.exists(DIR_WDATA + '/nws-' + cfg_feedid_nonus.lower() + '_' + post.guid + '.xml')
                 if not data_exists:
-                    os.system('wget --quiet -O "/tmp/nws_data/nws-' + cfg_feedid_nonus.lower() + '_' + post.guid + '.xml" ' + post.link + '');
+                    os.system('wget --quiet -O "'+ DIR_WDATA +'/nws-' + cfg_feedid_nonus.lower() + '_' + post.guid + '.xml" ' + post.link + '');
 
 
                 file = open(cfg_log, 'r')
@@ -496,7 +503,7 @@ if cfg_enable_nonus == "on":
                 if n_seen == "no":
                     os.system('echo '+post.guid+' >> '+cfg_log+'')
 
-                    alert_cap = '/tmp/nws_data/nws-' + cfg_feedid_nonus.lower() + '_' + post.guid + '.xml'
+                    alert_cap = DIR_WDATA + '/nws-' + cfg_feedid_nonus.lower() + '_' + post.guid + '.xml'
                     alert_src = open(alert_cap, 'r').read()
                     alert_list = CAPParser(alert_src).as_dict()
 
