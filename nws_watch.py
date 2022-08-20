@@ -230,7 +230,7 @@ for post in posts:
                             if cfg_us_alert == "on":
                                 os.system(cfg_sound)
                             if cfg_us_voice == "on":
-                                os.system(cfg_start + cfg_tit + cfg_msg + cfg_end)
+                                os.system(cfg_start + cfg_tit + cfg_msg.replace("mph", "miles per hour") + cfg_end)
 
                             
                             
