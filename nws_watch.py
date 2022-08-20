@@ -217,9 +217,11 @@ for post in posts:
                         os.system('echo '+post.id+' >> '+cfg_us_log+'')
 
                         # TRIGGER THE SYSTEM SHUTDOWN PROMPT FOR STORM AND TORNADO WARNINGS
-                        if ("Tornado Warning") in post.title:
+                        if ("tornado warning") in post.title.lower():
                             cfg_us_dopower = "yes"
-                        if ("Severe Thunderstorm Warning") in post.title:
+                        if ("severe thunderstorm warning") in post.title.lower():
+                            cfg_us_dopower = "yes"
+                        if ("strong thunderstorm") in post.summary.lower():
                             cfg_us_dopower = "yes"
                         
                         # SOUND ALERT - only if title contains keywords defined in configuration and sound alerts enabled
