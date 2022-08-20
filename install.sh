@@ -50,6 +50,10 @@ chmod u+x ~/.local/bin/wx_check
 
 sudo apt-get install wget espeak python3-pip zenity
 
+# TO FIX URL REQUEST WARNINGS
+#sudo pip3 install requests
+#sudo python3 -m pip install --upgrade requests
+
 sudo pip3 install configparser
 sudo pip3 install feedparser
 sudo pip3 install capparselib
