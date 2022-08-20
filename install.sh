@@ -48,13 +48,14 @@ chmod u+x ~/.local/bin/wx_check
 
 
 
-#sudo apt-get install wget espeak python3-pip zenity
+sudo apt-get install wget espeak python3-pip zenity
 
-#sudo pip3 install configparser
-#sudo pip3 install feedparser
-#sudo pip3 install capparselib
-#sudo pip3 install numpy
-#sudo pip3 install pandas
-#sudo pip3 install pyqrcode
-#sudo pip3 install pypng
-#sudo pip3 install pyshorteners
+sudo pip3 install configparser
+sudo pip3 install feedparser
+sudo pip3 install capparselib
+sudo pip3 install numpy
+sudo pip3 install pandas
+sudo pip3 install pyqrcode
+sudo pip3 install pypng
+sudo pip3 install pyshorteners
+sudo pip3 install gTTS
