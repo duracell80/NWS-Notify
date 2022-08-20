@@ -242,7 +242,8 @@ if cfg_us_dopower == "yes":
         QUESTION = str(os.system('zenity --question --no-wrap --default-cancel --timeout 180 --text="Potenitally destructive weather is near by! \n\nDo you wish to shutdown your system?"'))
         if QUESTION == "0":
             os.system("shutdown -h 00:05")
-            os.system('zenity --warning --no-wrap --timeout 180 --text="Please save your work during the next 5 minutes! \nUse shutdown -c to cancel"')         
+            os.system('zenity --warning --no-wrap --timeout 60 --text="Please save your work during the next 5 minutes!"')
+            os.system('zenity --progress --title= "Timed System Shutdown In Effect" --text="System Shutdown timer in effect \n Use shutdown -c to cancel" --time-remaining --percentage=0 --timeout 300 --no-cancel')
                             
                             
                             
