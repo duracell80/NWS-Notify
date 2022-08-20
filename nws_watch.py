@@ -229,13 +229,14 @@ for post in posts:
                             if cfg_us_alert == "on":
                                 os.system(cfg_sound)
                             if cfg_us_voice == "on":
-                                os.system(cfg_start + cfg_tit + cfg_msg.replace("mph", "miles per hour") + cfg_end)
-                                #tts = gTTS(cfg_msg.replace("mph", "miles per hour"), lang='en', tld='com')
-                                
+
                                 # GOOGLE TTS - ESPEAK AS BACKUP
+                                tts = gTTS(cfg_msg.replace("mph", "miles per hour"), lang='en', tld='com')
                                 tts.save(DIR_ASSET + '/wx_alert.mp3')
                                 os.system("ffmpeg -y -i " + DIR_ASSET + "/wx_alert.mp3 -acodec pcm_u8 -ar 22050 " + DIR_ASSET + "/wx_alert.wav")
                                 os.system("play "+ DIR_ASSET +"/wx_alert.wav")
+                                
+                                #os.system(cfg_start + cfg_tit + cfg_msg.replace("mph", "miles per hour") + cfg_end)
                                 
 
                             
