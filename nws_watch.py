@@ -248,10 +248,10 @@ for post in posts:
 if cfg_us_dopower == "yes":
     print("[i] Potenitally destructive weather is near by!")
     if cfg_us_shutdown == "on":
-        QUESTION = str(os.system('zenity --question --no-wrap --default-cancel --timeout 300 --text="Potenitally destructive weather is near by! \n' + lastmsg + ' \n\nDo you wish to shutdown your system?"'))
+        QUESTION = str(os.system('zenity --question --width=500 --default-cancel --timeout 300 --text="Potenitally destructive weather is near by! \n' + lastmsg + ' \n\nDo you wish to suspend your system?"'))
         if QUESTION == "0":
-            os.system('zenity --warning --no-wrap --timeout 30 --text="Please save your work during the next 2 minutes!"')
-            os.system("sleep 120 && systemctl suspend")
+            os.system('zenity --warning --width=250 --timeout 30 --text="Please save your work during the next 2 minutes!"')
+            os.system("sleep 90 && notify-send --urgency=critical --category=im.received --icon=weather-storm-symbolic 'Your system is about to suspend in the next 30 seconds ...' && sleep 30 && systemctl suspend")
                             
                             
                             
