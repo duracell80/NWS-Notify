@@ -222,6 +222,8 @@ for post in posts:
                             cfg_us_dopower = "yes"
                         if ("strong thunderstorm") in post.summary.lower():
                             cfg_us_dopower = "yes"
+                            
+                        lastmsg = post.title + '\n' + cfg_msg
                         
                         # SOUND ALERT - only if title contains keywords defined in configuration and sound alerts enabled
                         kfound = [fn for fn in cfg_us_alertkeys if(fn.lower() in post.cap_event.lower())]
@@ -246,11 +248,10 @@ for post in posts:
 if cfg_us_dopower == "yes":
     print("[i] Potenitally destructive weather is near by!")
     if cfg_us_shutdown == "on":
-        QUESTION = str(os.system('zenity --question --no-wrap --default-cancel --timeout 180 --text="Potenitally destructive weather is near by! \n\nDo you wish to shutdown your system?"'))
+        QUESTION = str(os.system('zenity --question --no-wrap --default-cancel --timeout 300 --text="Potenitally destructive weather is near by! \n' + lastmsg + ' \n\nDo you wish to shutdown your system?"'))
         if QUESTION == "0":
-            os.system("echo 'systemctl suspend' | at now + 5 minutes")
-            os.system('zenity --warning --no-wrap --timeout 280 --text="Please save your work during the next 5 minutes!"')
-            os.system('zenity --progress --title= "Timed System Shutdown In Effect" --text="Use shutdown -c to cancel" --time-remaining --percentage=0 --timeout 300 --no-cancel')
+            os.system('zenity --warning --no-wrap --timeout 30 --text="Please save your work during the next 2 minutes!"')
+            os.system("sleep 120 && systemctl suspend")
                             
                             
                             

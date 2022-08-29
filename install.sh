@@ -48,18 +48,18 @@ chmod u+x ~/.local/bin/wx_check
 
 
 
-sudo apt-get install wget espeak python3-pip zenity at
+sudo apt-get install wget espeak python3-pip zenity
 
 # TO FIX URL REQUEST WARNINGS
 #sudo pip3 install requests
 #sudo python3 -m pip install --upgrade requests
 
-sudo pip3 install configparser
-sudo pip3 install feedparser
-sudo pip3 install capparselib
-sudo pip3 install numpy
-sudo pip3 install pandas
-sudo pip3 install pyqrcode
-sudo pip3 install pypng
-sudo pip3 install pyshorteners
-sudo pip3 install gTTS
+pip3 install configparser
+pip3 install feedparser
+pip3 install capparselib
+pip3 install numpy
+pip3 install pandas
+pip3 install pyqrcode
+pip3 install pypng
+pip3 install pyshorteners
+pip3 install gTTS
