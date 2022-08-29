@@ -48,7 +48,7 @@ chmod u+x ~/.local/bin/wx_check
 
 
 
-sudo apt-get install wget espeak python3-pip zenity
+sudo apt-get install wget espeak python3-pip zenity at
 
 # TO FIX URL REQUEST WARNINGS
 #sudo pip3 install requests
