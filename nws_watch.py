@@ -127,7 +127,7 @@ if cfg_us_enable == "on":
                 feed_now = float(time.time())
                 feed_dif = float(feed_now + (float(cfg_timer) * 60))
                 feed_nxt = datetime.fromtimestamp(feed_dif)
-                print("[-] Weather threat monitoring (" + cfg_locale + ", " + cfg_region + " - Next update: " + feed_nxt.strftime('%H:%M:%S') + ")")
+                print("[-] Weather threat monitoring (" + cfg_locale + ", " + cfg_region + ")")
         
     # DATA FILE DOESNT EXIST
     else:
@@ -159,7 +159,16 @@ for post in posts:
 
 
                 if locale_item.lower() in area_item:
-
+                    
+                    # LOOK FOR KEYWORDS IN TITLE
+                    kword_match = "no"
+                    if cfg_kwords == "all":
+                        kword_match = "yes"
+                    else:
+                        for kword in range(len(cfg_keywords)):
+                            if cfg_keywords[kword].lower() in post.title.lower():
+                                kword_match = "yes"
+                    
                     # READ THE SEEN ALERTS FILE (Cleared on system reboot, logout etc)
                     file = open(cfg_us_log, 'r')
                     lines = file.readlines()
@@ -170,8 +179,8 @@ for post in posts:
                         if post.id in line:
                             n_seen = "yes"
 
-                    # CONTINUE IF ALERT NOT ALREADY SEEN        
-                    if n_seen == "no":
+                    # CONTINUE IF ALERT NOT ALREADY SEEN AND NOT CANCELLED AND MATCHED KEYWORDS GIVEN IN CONFIG       
+                    if n_seen == "no" and "cancelled" not in post.summary.lower() and kword_match == "yes":
                         url = post.id
                         cfg_tit = "Weather Alert For " + locale_item.upper() + " County."
                         cfg_msg = post.summary.replace("*", " ")

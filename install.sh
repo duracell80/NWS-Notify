@@ -18,7 +18,7 @@ chmod u+rw $DIR_QCODE
 
 cp -f nws_watch.py $DIR_LOCAL
 cp -f nws_alerts.sh $DIR_LOCAL
-cp -f config.ini ~/.local/share/nws_alerts
+#cp -f config.ini ~/.local/share/nws_alerts
 chmod u+rw ~/.local/share/nws_alerts/config.ini
 cp -f nws_seen.txt $DIR_WDATA
 cp -f nws_seen.txt $DIR_WDATA/nws-uk_seen.txt
