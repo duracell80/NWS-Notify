@@ -35,7 +35,7 @@ cp -f nws_data.xml $DIR_WDATA/nws_data.xml
 chmod u+rw $DIR_WDATA/nws_seen.txt
 chmod u+rw $DIR_WDATA/nws_data.xml
 
-
+mkdir -p ~/.config/autostart
 cp -f NWS-Notify.desktop ~/.config/autostart
 sed -i "s|~/.local|${HOME}/.local|g" ~/.config/autostart/NWS-Notify.desktop
 
