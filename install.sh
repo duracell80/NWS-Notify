@@ -1,4 +1,5 @@
 #!/bin/bash
+DIR_CACHE="$HOME/.cache"
 DIR_LOCAL="$HOME/.local/share/nws_alerts"
 DIR_ASSET="$DIR_LOCAL/assets"
 DIR_WDATA="$DIR_ASSET/data"
@@ -8,6 +9,7 @@ mkdir -p $DIR_LOCAL
 mkdir -p $DIR_ASSET
 mkdir -p $DIR_WDATA
 mkdir -p $DIR_QCODE
+touch $DIR_CACHE/alerts_history.txt
 
 chmod u+rw $DIR_LOCAL
 chmod u+rw $DIR_ASSET
@@ -25,6 +27,7 @@ cp -f nws_seen.txt $DIR_WDATA/nws-uk_seen.txt
 cp -f nws_seen.txt $DIR_WDATA/nws-nonus_seen.txt
 #cp web_server.py $DIR_LOCAL
 
+cp -f notifications_read.py $HOME/.local/share/
 
 
 cp -f nws_data.xml $DIR_WDATA/nws-nonus_data.xml
