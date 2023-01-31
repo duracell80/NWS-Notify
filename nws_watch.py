@@ -40,7 +40,6 @@ cfg_us_enable          = cfg.get('nws_conf', 'enable', fallback='on')
 
 
 
-
 # US MAIN SCRIPT
 if cfg_us_enable == "on":
     cfg_us_log          = DIR_WDATA + "/nws_seen.txt"
@@ -73,6 +72,8 @@ if cfg_us_enable == "on":
     #os.system("ffmpeg -y -i " + DIR_ASSET + "/wx_alert.mp3  -filter:a \"atempo="+str(cfg_us_speed)+"\" -acodec pcm_u8 -ar 44100 " + DIR_ASSET + "/wx_alert.wav")
     #os.system("play "+ DIR_ASSET +"/wx_alert.wav")
     #sys.exit()
+    
+    
     
     # CHECK FOR DATA FILE
     data_exists = os.path.exists(DIR_WDATA + '/nws_data.xml')
@@ -232,7 +233,7 @@ for post in posts:
                         
                         log_us_msg = str(int(time.time())) + '|' + post.title + '|' + locale_item.upper() + ' County|' + cfg_msg + '|' + url
                         
-                        os.system('echo ' + str(log_us_msg) + ' >> ' + cfg_us_logtxt)
+                        os.system('echo "' + str(log_us_msg) + '" >> ' + cfg_us_logtxt)
 
                         # TRIGGER NOTIFIY SEND
                         os.system(cfg_script)
