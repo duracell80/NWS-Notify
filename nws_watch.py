@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
-import os, re, subprocess, time, configparser, feedparser, pandas
+import os, sys, re, subprocess, time, configparser, feedparser, pandas
 from datetime import datetime
 from gtts import gTTS
+from gtts.tokenizer import pre_processors
+import gtts.tokenizer.symbols
 
 from capparselib.parsers import CAPParser
+
 
 
 global HOME
@@ -38,12 +41,10 @@ cfg_us_enable          = cfg.get('nws_conf', 'enable', fallback='on')
 
 
 
-
-
-
 # US MAIN SCRIPT
 if cfg_us_enable == "on":
     cfg_us_log          = DIR_WDATA + "/nws_seen.txt"
+    cfg_us_logtxt       = DIR_WDATA + "/nws_alerts_us.log"
     cfg_qrcodes         = cfg.get('nws_conf', 'qrcode', fallback='off')
     cfg_urlsht          = cfg.get('nws_conf', 'urlsht', fallback='off')
     cfg_kwords          = cfg.get('nws_conf', 'keywords', fallback='tornado warning,severe thunderstorm warning,hurricane warning,red flag,blizzard warning,sepcial weather statement,severe weather statement')
@@ -60,10 +61,18 @@ if cfg_us_enable == "on":
     cfg_locales_watch   = cfg_locale_watch.lower().split(",")
     
     cfg_us_voice           = cfg.get('nws_conf', 'voice', fallback='off')
+    cfg_us_speed           = cfg.get('nws_conf', 'speed', fallback='1.125')
     cfg_us_alert           = cfg.get('nws_conf', 'alert', fallback='off')
     cfg_us_dopower         = "no"
     cfg_us_shutdown        = cfg.get('nws_conf', 'shutdown', fallback='off')
     
+    #DEBUG VOICE
+    #ttc = "Hello this is a test of the emergency alert test system and is only a test. Thank you for listening!"
+    #tts = gTTS(str(ttc), lang='en', tld='com')
+    #tts.save(DIR_ASSET + '/wx_alert.mp3')
+    #os.system("ffmpeg -y -i " + DIR_ASSET + "/wx_alert.mp3  -filter:a \"atempo="+str(cfg_us_speed)+"\" -acodec pcm_u8 -ar 44100 " + DIR_ASSET + "/wx_alert.wav")
+    #os.system("play "+ DIR_ASSET +"/wx_alert.wav")
+    #sys.exit()
     
     # CHECK FOR DATA FILE
     data_exists = os.path.exists(DIR_WDATA + '/nws_data.xml')
@@ -218,7 +227,12 @@ for post in posts:
                             else:
                                 # USE NWS LONG URL
                                 cfg_script = cfg_cmd + ' --urgency=normal --category=im.received --icon=dialog-warning-symbolic "' + post.title + ' [ ' + locale_item.upper() + ' County ]" "' + cfg_msg + ' ' + post.id + '"'
-
+                        
+                        # WRITE TO LOG OF EVENTS
+                        
+                        log_us_msg = str(int(time.time())) + '|' + post.title + '|' + locale_item.upper() + ' County|' + cfg_msg + '|' + url
+                        
+                        os.system('echo ' + str(log_us_msg) + ' >> ' + cfg_us_logtxt)
 
                         # TRIGGER NOTIFIY SEND
                         os.system(cfg_script)
@@ -242,12 +256,12 @@ for post in posts:
                             if cfg_us_voice == "on":
 
                                 # GOOGLE TTS - ESPEAK AS BACKUP
-                                tts = gTTS(cfg_msg.replace("mph", "miles per hour"), lang='en', tld='com')
+                                ttc = cfg_msg.replace("TN", "Tennessee")
+                                ttc = ttc.replace("mph", "miles per hour")
+                                tts = gTTS(str(ttc), lang='en', tld='co.uk')
                                 tts.save(DIR_ASSET + '/wx_alert.mp3')
-                                os.system("ffmpeg -y -i " + DIR_ASSET + "/wx_alert.mp3 -acodec pcm_u8 -ar 22050 " + DIR_ASSET + "/wx_alert.wav")
+                                os.system("ffmpeg -y -i " + DIR_ASSET + "/wx_alert.mp3  -filter:a \"atempo="+str(cfg_us_speed)+"\" -acodec pcm_u8 -ar 44100 " + DIR_ASSET + "/wx_alert.wav")
                                 os.system("play "+ DIR_ASSET +"/wx_alert.wav")
-                                
-                                #os.system(cfg_start + cfg_tit + cfg_msg.replace("mph", "miles per hour") + cfg_end)
                                 
 
                             

@@ -11,7 +11,7 @@ mkdir -p $DIR_QCODE
 
 notify-send --urgency=low --category=im.received --icon=help-info-symbolic "Weather Alerts Active" "Visit the Startup Applications to turn off for next login."
 
-$HOME/.local/share/notifications_read.py&
+#$HOME/.local/share/notifications_read.py&
 
 # KEEP A MONTH OF DATA
 find $DIR_WDATA -name "*.xml" -type f -mtime +31 -delete

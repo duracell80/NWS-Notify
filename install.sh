@@ -22,6 +22,7 @@ cp -f nws_watch.py $DIR_LOCAL
 cp -f nws_alerts.sh $DIR_LOCAL
 cp -f config.ini ~/.local/share/nws_alerts
 chmod u+rw ~/.local/share/nws_alerts/config.ini
+cp -f nws_alerts_us.log $DIR_WDATA
 cp -f nws_seen.txt $DIR_WDATA
 cp -f nws_seen.txt $DIR_WDATA/nws-uk_seen.txt
 cp -f nws_seen.txt $DIR_WDATA/nws-nonus_seen.txt
@@ -36,6 +37,7 @@ chmod u+rw $DIR_WDATA/nws-nonus_data.xml
 
 cp -f nws_data.xml $DIR_WDATA/nws_data.xml
 chmod u+rw $DIR_WDATA/nws_seen.txt
+chmod u+rw $DIR_WDATA/nws_alerts_us.log
 chmod u+rw $DIR_WDATA/nws_data.xml
 
 mkdir -p ~/.config/autostart
