@@ -259,7 +259,7 @@ for post in posts:
                                 # GOOGLE TTS - ESPEAK AS BACKUP
                                 ttc = cfg_msg.replace("TN", "Tennessee")
                                 ttc = ttc.replace("mph", "miles per hour")
-                                tts = gTTS(str(ttc), lang='en', tld='co.uk')
+                                tts = gTTS(str(ttc), lang='en', tld='com')
                                 tts.save(DIR_ASSET + '/wx_alert.mp3')
                                 os.system("ffmpeg -y -i " + DIR_ASSET + "/wx_alert.mp3  -filter:a \"atempo="+str(cfg_us_speed)+"\" -acodec pcm_u8 -ar 44100 " + DIR_ASSET + "/wx_alert.wav")
                                 os.system("play "+ DIR_ASSET +"/wx_alert.wav")
