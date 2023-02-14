@@ -21,5 +21,5 @@ while true
 do
  sort $DIR_WDATA/nws_seen.txt | uniq > $DIR_WDATA/nws_seen.tmp && cat $DIR_WDATA/nws_seen.tmp > $DIR_WDATA/nws_seen.txt && rm $DIR_WDATA/nws_seen.tmp
  python3 $DIR_LOCAL/nws_watch.py
- sleep 60
+ sleep 120
 done
