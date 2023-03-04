@@ -8,6 +8,7 @@ DIR_QCODE="$DIR_ASSET/qrcodes"
 mkdir -p $DIR_LOCAL
 mkdir -p $DIR_ASSET
 mkdir -p $DIR_WDATA
+mkdir -p $DIR_WDATA/active
 mkdir -p $DIR_QCODE
 #touch $DIR_CACHE/alerts_history.txt
 
@@ -15,6 +16,7 @@ chmod u+rw $DIR_LOCAL
 chmod u+rw $DIR_ASSET
 chmod u+rw $DIR_WDATA
 chmod u+rw $DIR_QCODE
+
 
 
 
@@ -53,7 +55,7 @@ chmod u+x ~/.local/bin/wx_check
 
 
 
-sudo apt-get install wget espeak python3-pip zenity libxml2-dev libxslt-dev
+sudo apt-get install wget espeak sox python3-pip zenity libxml2-dev libxslt-dev
 
 # TO FIX URL REQUEST WARNINGS
 #sudo pip3 install requests

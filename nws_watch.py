@@ -22,7 +22,7 @@ cfg.read(FILE_CONF)
 
 # GENERAL CONFIGURATION
 cfg_level           = cfg.get('alert_conf', 'level', fallback='80')
-cfg_timer           = cfg.get('alert_conf', 'timer', fallback='15')
+cfg_timer           = cfg.get('alert_conf', 'timer', fallback='60')
 cfg_para            = ""
 
 
@@ -80,7 +80,6 @@ if cfg_us_enable == "on":
 
     if data_exists:       
         
-        
         # CHECK OUTSIDE AREA FOR APPROACHING THUNDERSTORMS IF watch=on
         if cfg_watch == "on":
             # READ THE SEEN ALERTS FILE (Cleared on system reboot, logout etc)
@@ -103,7 +102,7 @@ if cfg_us_enable == "on":
 
 
                 for post in posts:
-                    if "thunderstorm" in post.summary.lower():
+                    if "thunderstorm" in post.summary.lower() or "tornado" in post.title.lower():
                         cfg_timer = "10"
                         a_seen = "no"
                         for line in lines:
@@ -137,7 +136,7 @@ if cfg_us_enable == "on":
                 feed_now = float(time.time())
                 feed_dif = float(feed_now + (float(cfg_timer) * 60))
                 feed_nxt = datetime.fromtimestamp(feed_dif)
-                print("[-] Weather threat monitoring (" + cfg_locale + ", " + cfg_region + ")")
+                print("[-] Weather threat monitoring (" + cfg_locale + ", " + cfg_region + ") Updates every " + str(cfg_timer) + " minutes")
         
     # DATA FILE DOESNT EXIST
     else:
@@ -156,10 +155,14 @@ blog_feed = feedparser.parse(feed_dat)
 # READ THE FEED
 posts = blog_feed.entries
 
+os.system('rm -f ' + DIR_WDATA + '/active-nws/tornado_watch')
+os.system('rm -f ' + DIR_WDATA + '/active-nws/tornado_warning')
+os.system('rm -f ' + DIR_WDATA + '/active-nws/severe_thunderstorm_warning')
+os.system('rm -f ' + DIR_WDATA + '/active-nws/wind_warning')
 
 # GO THROUGH THE FEED
 for post in posts:
-    
+
     if hasattr(post, "cap_areadesc"):
         areas = post.cap_areadesc.split(";")
         for area in areas:
@@ -169,7 +172,19 @@ for post in posts:
 
 
                 if locale_item.lower() in area_item:
-                    
+                    if "wind warning" in post.title.lower():
+                        cfg_timer = "30"
+                        os.system('touch ' + DIR_WDATA + '/active-nws/wind_warning')
+                    if "tornado watch" in post.title.lower():
+                        cfg_timer = "10"
+                        os.system('touch ' + DIR_WDATA + '/active-nws/tornado_watch')
+                    if "severe thunderstorm" in post.title.lower():
+                        cfg_timer = "10"
+                        os.system('touch ' + DIR_WDATA + '/active-nws/severe_thunderstorm_warning')
+                    if "tornado warning" in post.title.lower():
+                        cfg_timer = "5"
+                        os.system('touch ' + DIR_WDATA + '/active-nws/tornado_warning')
+
                     # LOOK FOR KEYWORDS IN TITLE
                     kword_match = "no"
                     if cfg_kwords == "all":
