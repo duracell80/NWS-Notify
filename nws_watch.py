@@ -8,6 +8,9 @@ import gtts.tokenizer.symbols
 
 from capparselib.parsers import CAPParser
 
+def remove_html_tags(text):
+    clean = re.compile('<.*?>')
+    return re.sub(clean, '', text)
 
 
 global HOME
@@ -66,6 +69,8 @@ if cfg_us_enable == "on":
     cfg_us_shutdown        = cfg.get('nws_conf', 'shutdown', fallback='off')
     
     cfg_aqi_timer          = "180"
+    cfg_aqi_usid           = "89"
+    
     #DEBUG VOICE
     #ttc = "Hello this is a test of the emergency alert test system and is only a test. Thank you for listening!"
     #tts = gTTS(str(ttc), lang='en', tld='com')
@@ -358,12 +363,52 @@ if aqi_us_exists:
 
                         os.system('echo "' + str(log_aqi_us_msg) + '" >> ' + cfg_us_logtxt)
 
-            print("\n\n")
+            
+            
+# US CURRENT AIRQUALITY FOR LOCATION 89=Nashville, TN
+#https://feeds.enviroflash.info/rss/realtime/89.xml
+
+aqi_curr_url            = "https://feeds.enviroflash.info/rss/realtime/" + cfg_aqi_usid + ".xml"
+aqi_curr_file           = DIR_WDATA + "/nws_aqi_curr.xml"
+aqi_curr_timer          = "60"
+
+# CHECK FOR US AQI DATA FILE
+aqi_curr_exists         = os.path.exists(aqi_curr_file)
+
+if aqi_curr_exists:
+        aqi_curr_age = subprocess.check_output('find '+ aqi_curr_file +' -mmin +' + aqi_curr_timer, shell=True, universal_newlines=True)
+
+        # CHECK THE AGE OF THE US AQI DATA
+        if len(aqi_curr_age) > 0:
+            os.system('wget --quiet -O "'+ aqi_curr_file + '" ' + aqi_curr_url + '');
+        else:
+            print("[-] Air Quality Current Conditions (Nashville, TN) Updates every " + str(aqi_curr_timer) + " minutes")
+            
+        if len(aqi_curr_age) > 0:
+            # READ US FEED
+            aqi_curr_xml = open(aqi_curr_file, "r")
+            aqi_curr_dat = aqi_curr_xml.read().replace("cap:", "cap_")
+            aqi_curr_xml.close()
+
+            aqi_curr_feed = feedparser.parse(aqi_curr_dat)
+
+            # READ THE FEED
+            aqi_curr = aqi_curr_feed.entries
+
+            # GO THROUGH THE FEED
+            for post in aqi_curr:
+                aqi_curr_raw    = str(remove_html_tags(str(post.description)))
+                aqi_conditions  = re.sub(r"[\t]*", "", aqi_curr_raw)
+                print(str(aqi_curr_raw))
+
+                os.system('notify-send --urgency=low --category=im.received --icon=weather-severe-alert-symbolic "'+ str(post.title) + '" "' + str(aqi_conditions) + '"')
+
+            
 else:
-    os.system('touch ' + aqi_us_file)
-    os.system('chmod a+rw ' + aqi_us_file)
-    os.system('touch ' + aqi_us_file)
-    os.system('chmod a+rw ' + aqi_us_file)                
+    os.system('touch ' + aqi_curr_file)
+    os.system('chmod a+rw ' + aqi_curr_file)
+    os.system('touch ' + aqi_curr_file)
+    os.system('chmod a+rw ' + aqi_curr_file)                
 
                 
                             
