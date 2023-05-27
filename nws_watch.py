@@ -351,7 +351,7 @@ if aqi_us_exists:
 
                         aqi_us_msg = str(post.cap_description)
 
-                        os.system('notify-send --urgency=low --category=im.received --icon=weather-severe-alert-symbolic "'+ str(post.cap_headline) + '" "' + str(post.cap_description) + '. ' +  str(post.cap_instruction) + '"')
+                        os.system('notify-send --urgency=low --category=im.received --icon=weather-severe-alert-symbolic "'+ str(post.cap_headline) + '" "' + str(post.cap_instruction) + '"')
 
                         # WRITE TO LOG OF EVENTS
                         log_aqi_us_msg = str(int(time.time())) + '|' + post.cap_headline + '|All County|' + aqi_us_msg + '|' + url
