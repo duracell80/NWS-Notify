@@ -65,15 +65,23 @@ if cfg_us_enable == "on":
     cfg_us_dopower         = "no"
     cfg_us_shutdown        = cfg.get('nws_conf', 'shutdown', fallback='off')
     
+    cfg_aqi_timer          = "180"
     #DEBUG VOICE
     #ttc = "Hello this is a test of the emergency alert test system and is only a test. Thank you for listening!"
     #tts = gTTS(str(ttc), lang='en', tld='com')
     #tts.save(DIR_ASSET + '/wx_alert.mp3')
     #os.system("ffmpeg -y -i " + DIR_ASSET + "/wx_alert.mp3  -filter:a \"atempo="+str(cfg_us_speed)+"\" -acodec pcm_u8 -ar 44100 " + DIR_ASSET + "/wx_alert.wav")
     #os.system("play "+ DIR_ASSET +"/wx_alert.wav")
-    #sys.exit()
     
     
+    file = open(cfg_us_log, 'r')
+    lines = file.readlines()
+    file.close()
+    
+    # BALANCE SAFETY WITH SERVER LOAD
+    feed_xml = open(DIR_WDATA + "/nws_data.xml", "r")
+    feed_dat = feed_xml.read().replace("cap:", "cap_")
+    feed_xml.close()
     
     # CHECK FOR DATA FILE
     data_exists = os.path.exists(DIR_WDATA + '/nws_data.xml')
@@ -85,7 +93,8 @@ if cfg_us_enable == "on":
             # READ THE SEEN ALERTS FILE (Cleared on system reboot, logout etc)
             file = open(cfg_us_log, 'r')
             lines = file.readlines()
-
+            file.close()
+            
             # BALANCE SAFETY WITH SERVER LOAD
             feed_xml = open(DIR_WDATA + "/nws_data.xml", "r")
             feed_dat = feed_xml.read().replace("cap:", "cap_")
@@ -292,7 +301,71 @@ if cfg_us_dopower == "yes":
             os.system('zenity --warning --width=250 --timeout 30 --text="Please save your work during the next 2 minutes!"')
             os.system("sleep 90 && notify-send --urgency=critical --category=im.received --icon=weather-storm-symbolic 'Your system is about to suspend in the next 30 seconds ...' && sleep 30 && systemctl suspend")
                             
-                            
+
+# US Air Quality
+aqi_feed_url            = "https://feeds.enviroflash.info/cap/aggregate.xml"
+aqi_us_file             = DIR_WDATA + "/nws_aqi_data.xml"
+
+# CHECK FOR US AQI DATA FILE
+aqi_us_exists           = os.path.exists(aqi_us_file)
+
+if aqi_us_exists:
+        aqi_us_age = subprocess.check_output('find '+ aqi_us_file +' -mmin +' + cfg_aqi_timer, shell=True, universal_newlines=True)
+
+        # CHECK THE AGE OF THE US AQI DATA
+        if len(aqi_us_age) > 0:
+            os.system('wget --quiet -O "'+ aqi_us_file + '" ' + aqi_feed_url + '');
+            print("\n\n[-] Air Quality Data fetched from AirNow [US-ALL]")
+        else:
+            print("[-] Air Quality Monitoring (US-ALL) Updates every " + str(cfg_aqi_timer) + " minutes")
+
+            # READ US FEED
+            aqi_us_xml = open(aqi_us_file, "r")
+            aqi_us_dat = aqi_us_xml.read().replace("cap:", "cap_")
+            aqi_us_xml.close()
+
+            aqi_us_feed = feedparser.parse(aqi_us_dat)
+
+            # READ THE FEED
+            aqi_posts = aqi_us_feed.entries
+
+            # READ THE SEEN ALERTS FILE (Cleared on system reboot, logout etc)
+            file = open(cfg_us_logtxt, 'r')
+            lines = file.readlines()
+            file.close()
+
+            # GO THROUGH THE FEED
+            for post in aqi_posts:
+                if str(cfg_region).lower() in str(post.cap_areadesc).lower():
+                    print( "[!] Air Quality Alert: " + str(post.cap_areadesc).upper())
+
+                    # LOOK FOR SEEN ALERT ID's
+                    n_seen = "no"
+                    for line in lines:
+                        if post.id in line:
+                            n_seen = "yes"
+
+                    # CONTINUE IF ALERT NOT ALREADY SEEN AND NOT CANCELLED AND MATCHED KEYWORDS GIVEN IN CONFIG       
+                    if n_seen != "yes":
+                        url = post.id
+
+                        aqi_us_msg = str(post.cap_description)
+
+                        os.system('notify-send --urgency=low --category=im.received --icon=weather-severe-alert-symbolic "'+ str(post.cap_headline) + '" "' + str(post.cap_description) + '. ' +  str(post.cap_instruction) + '"')
+
+                        # WRITE TO LOG OF EVENTS
+                        log_aqi_us_msg = str(int(time.time())) + '|' + post.cap_headline + '|All County|' + aqi_us_msg + '|' + url
+
+                        os.system('echo "' + str(log_aqi_us_msg) + '" >> ' + cfg_us_logtxt)
+
+            print("\n\n")
+else:
+    os.system('touch ' + aqi_us_file)
+    os.system('chmod a+rw ' + aqi_us_file)
+    os.system('touch ' + aqi_us_file)
+    os.system('chmod a+rw ' + aqi_us_file)                
+
+                
                             
     
 # Main script - UK (MET OFFICE)
