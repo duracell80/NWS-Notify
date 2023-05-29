@@ -16,6 +16,8 @@ notify-send --urgency=low --category=im.received --icon=help-info-symbolic "Weat
 # KEEP A MONTH OF DATA
 find $DIR_WDATA -name "*.xml" -type f -mtime +31 -delete
 
+wget --quiet -O "${DIR_WDATA}/nws_pds_data.xml" "https://www.spc.noaa.gov/products/spcpdswwrss.xml"
+
 
 while true
 do
