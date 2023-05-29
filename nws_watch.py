@@ -68,7 +68,8 @@ if cfg_us_enable == "on":
     cfg_us_dopower         = "no"
     cfg_us_shutdown        = cfg.get('nws_conf', 'shutdown', fallback='off')
     
-    cfg_aqi_timer          = "180"
+    cfg_pds_timer          = "360"
+    cfg_aqi_timer          = "360"
     cfg_aqi_usid           = "89"
     
     #DEBUG VOICE
@@ -306,6 +307,67 @@ if cfg_us_dopower == "yes":
             os.system('zenity --warning --width=250 --timeout 30 --text="Please save your work during the next 2 minutes!"')
             os.system("sleep 90 && notify-send --urgency=critical --category=im.received --icon=weather-storm-symbolic 'Your system is about to suspend in the next 30 seconds ...' && sleep 30 && systemctl suspend")
                             
+# US SPC - PDS (Particularly Dangerous Situation)
+# https://www.spc.noaa.gov/products/spcpdswwrss.xml                
+
+# US Air Quality
+pds_feed_url            = "https://www.spc.noaa.gov/products/spcpdswwrss.xml "
+pds_us_file             = DIR_WDATA + "/nws_pds_data.xml"
+
+# CHECK FOR US AQI DATA FILE
+pds_us_exists           = os.path.exists(pds_us_file)
+
+if pds_us_exists:
+        pds_us_age = subprocess.check_output('find '+ pds_us_file +' -mmin +' + cfg_pds_timer, shell=True, universal_newlines=True)
+
+        # CHECK THE AGE OF THE US AQI DATA
+        if len(pds_us_age) > 0:
+            os.system('wget --quiet -O "'+ pds_us_file + '" ' + pds_feed_url + '');
+            print("\n\n[-] SPC PDS Data fetched from AirNow [US-ALL]")
+        else:
+            print("[-] SPC PDS Monitoring (US-ALL) Updates every " + str(cfg_pds_timer) + " minutes")
+            
+        # READ US FEED
+        pds_us_xml = open(pds_us_file, "r")
+        pds_us_dat = pds_us_xml.read().replace("cap:", "cap_")
+        pds_us_xml.close()
+
+        pds_us_feed = feedparser.parse(pds_us_dat)
+
+        # READ THE FEED
+        pds_posts = pds_us_feed.entries
+
+        # READ THE SEEN ALERTS FILE (Cleared on system reboot, logout etc)
+        file = open(cfg_us_logtxt, 'r')
+        lines = file.readlines()
+        file.close()
+        
+        # GO THROUGH THE FEED
+        for post in pds_posts:
+            pds_us_url = str(post.link)
+            pds_us_guid = str(post.guid)
+            pds_us_title = str(post.title)
+            pds_us_desc = str(remove_html_tags(str(post.description)))
+            
+            # LOOK FOR SEEN ALERT ID's
+            n_seen = "no"
+            for line in lines:
+                if post.id in line:
+                    n_seen = "yes"
+
+            # CONTINUE IF ALERT NOT ALREADY SEEN       
+            if n_seen != "yes":
+                # WRITE TO LOG OF EVENTS
+                log_pds_us_msg = str(int(time.time())) + '|' + str(pds_us_title) + '|All State|' + pds_us_guid + '|' + pds_us_dsec
+
+                os.system('echo "' + str(log_pds_us_msg) + '" >> ' + cfg_us_logtxt)
+                os.system('notify-send --urgency=low --category=im.received --icon=weather-severe-alert-symbolic "'+ str(pds_us_title) + '" "' + str(pds_us_desc) + '"')
+                
+
+else:
+    os.system('touch ' + pds_us_file)
+    os.system('chmod a+rw ' + pds_us_file)
+    os.system('wget --quiet -O "'+ pds_us_file + '" ' + pds_feed_url + '');
 
 # US Air Quality
 aqi_feed_url            = "https://feeds.enviroflash.info/cap/aggregate.xml"
@@ -377,10 +439,12 @@ aqi_curr_exists         = os.path.exists(aqi_curr_file)
 
 if aqi_curr_exists:
         aqi_curr_age = subprocess.check_output('find '+ aqi_curr_file +' -mmin +' + aqi_curr_timer, shell=True, universal_newlines=True)
-
+        
         # CHECK THE AGE OF THE US AQI DATA
         if len(aqi_curr_age) > 0:
-            os.system('wget --quiet -O "'+ aqi_curr_file + '" ' + aqi_curr_url + '');
+            os.system("rm -f " + aqi_curr_file)
+            time.sleep(20)
+            os.system('wget --quiet -O '+ aqi_curr_file + ' ' + aqi_curr_url + '');
         else:
             print("[-] Air Quality Current Conditions (Nashville, TN) Updates every " + str(aqi_curr_timer) + " minutes")
             
