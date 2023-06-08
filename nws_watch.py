@@ -59,6 +59,13 @@ if cfg_us_enable == "on":
     cfg_locales         = cfg_locale.lower().split(",")
     cfg_watch           = cfg.get('nws_conf', 'watch', fallback='off')
     
+    cfg_region_aqi      = cfg.get('aqi_conf', 'region', fallback='TN')
+    cfg_aqi_cities      = cfg.get('aqi_conf', 'cities', fallback='memphis,nashville,clarksville')
+    cfg_cities_aqi      = cfg_aqi_cities.lower().split(",")
+    cfg_aqi_usid        = cfg.get('aqi_conf', 'usid', fallback='89')
+    aqi_curr_timer      = cfg.get('aqi_conf', 'timer_conditions', fallback='60')
+    cfg_aqi_timer       = cfg.get('aqi_conf', 'timer_alerts', fallback='360')
+    
     cfg_locale_watch    = cfg.get('nws_conf', 'locale_watch', fallback='Dickson,Cheatham,Wilson,Williamson,Robertson,Rutherford,Sumner,Montgomery')
     cfg_locales_watch   = cfg_locale_watch.lower().split(",")
     
@@ -69,8 +76,9 @@ if cfg_us_enable == "on":
     cfg_us_shutdown        = cfg.get('nws_conf', 'shutdown', fallback='off')
     
     cfg_pds_timer          = "120"
-    cfg_aqi_timer          = "360"
-    cfg_aqi_usid           = "89"
+    
+    
+    
     
     #DEBUG VOICE
     #ttc = "Hello this is a test of the emergency alert test system and is only a test. Thank you for listening!"
@@ -390,7 +398,7 @@ if aqi_us_exists:
             os.system('wget --quiet -O "'+ aqi_us_file + '" ' + aqi_feed_url + '');
             print("\n\n[-] Air Quality Data fetched from AirNow [US-ALL]")
         else:
-            print("[-] Air Quality Monitoring (US-ALL) Updates every " + str(cfg_aqi_timer) + " minutes")
+            print("[-] Air Quality Monitoring (US-ALL) (Updates every " + str(cfg_aqi_timer) + " minutes)")
 
             # READ US FEED
             aqi_us_xml = open(aqi_us_file, "r")
@@ -409,8 +417,11 @@ if aqi_us_exists:
 
             # GO THROUGH THE FEED
             for post in aqi_posts:
-                if str(cfg_region).lower() in str(post.cap_areadesc).lower():
-                    print( "[!] Air Quality Alert: " + str(post.cap_areadesc).upper())
+
+                if str(cfg_region_aqi).lower() in str(post.cap_areadesc).lower():
+                    for city in cfg_cities_aqi:
+                        if city.lower() in post.description.lower():
+                            print( "[!] Air Quality Alert: " + str(post.cap_areadesc).upper())
 
                     # LOOK FOR SEEN ALERT ID's
                     n_seen = "no"
@@ -424,61 +435,64 @@ if aqi_us_exists:
 
                         aqi_us_msg = str(post.cap_description)
 
-                        os.system('notify-send --urgency=low --category=im.received --icon=weather-severe-alert-symbolic "'+ str(post.cap_headline) + '" "' + str(post.cap_description) + '.. ' +  str(post.cap_instruction) + '"')
+                        for city in cfg_cities_aqi:
+                            if city.lower() in post.description.lower():
+                            
+                                os.system('notify-send --urgency=low --category=im.received --icon=weather-severe-alert-symbolic "'+ str(post.cap_headline) + '" "' + str(post.cap_description) + '.. ' +  str(post.cap_instruction) + '"')
 
-                        # WRITE TO LOG OF EVENTS
-                        log_aqi_us_msg = str(int(time.time())) + '|' + post.cap_headline + '|All County|' + aqi_us_msg + '|' + url
+                                # WRITE TO LOG OF EVENTS
+                                log_aqi_us_msg = str(int(time.time())) + '|' + post.cap_headline + '|All County|' + aqi_us_msg + '|' + url
 
-                        os.system('echo "' + str(log_aqi_us_msg) + '" >> ' + cfg_us_logtxt)
+                                os.system('echo "' + str(log_aqi_us_msg) + '" >> ' + cfg_us_logtxt)
 
             
             
-# US CURRENT AIRQUALITY FOR LOCATION 89=Nashville, TN
-#https://feeds.enviroflash.info/rss/realtime/89.xml
+# US CURRENT AIRQUALITY FOR LOCATION 89=Nashville, TN 593=Willamsport, PA
+#https://feeds.enviroflash.info/rss/realtime/<indexnumber>.xml
 
-#aqi_curr_url            = "https://feeds.enviroflash.info/rss/realtime/" + cfg_aqi_usid + ".xml"
-#aqi_curr_file           = DIR_WDATA + "/nws_aqi_curr.xml"
-#aqi_curr_timer          = "60"
+aqi_curr_url            = "https://feeds.enviroflash.info/rss/realtime/" + cfg_aqi_usid + ".xml"
+aqi_curr_file           = DIR_WDATA + "/nws_aqi_curr.xml"
 
 # CHECK FOR US AQI DATA FILE
-#aqi_curr_exists         = os.path.exists(aqi_curr_file)
+aqi_curr_exists         = os.path.exists(aqi_curr_file)
 
-#if aqi_curr_exists:
-#        aqi_curr_age = subprocess.check_output('find '+ aqi_curr_file +' -mmin +' + aqi_curr_timer, shell=True, universal_newlines=True)
+if aqi_curr_exists:
+        aqi_curr_age = subprocess.check_output('find '+ aqi_curr_file +' -mmin +' + aqi_curr_timer, shell=True, universal_newlines=True)
         
         # CHECK THE AGE OF THE US AQI DATA
-#        if len(aqi_curr_age) > 0:
-#           os.system("rm -f " + aqi_curr_file)
-#            time.sleep(10)
-#            os.system('wget --quiet -O '+ aqi_curr_file + ' ' + aqi_curr_url + '');
-#        else:
-#            print("[-] Air Quality Current Conditions (Nashville, TN) Updates every " + str(aqi_curr_timer) + " minutes")
+        if len(aqi_curr_age) > 0:
+            os.system("rm -f " + aqi_curr_file)
+            time.sleep(2)
+            os.system('wget --quiet -O '+ aqi_curr_file + ' ' + aqi_curr_url + '');
+            #print("[-] Air Quality Current Conditions [UPDATED]")
+        else:
+            print("[-] Air Quality Current Conditions  (updates every " + str(aqi_curr_timer) + " minutes)")
             
-#        if len(aqi_curr_age) > 0:
+        if len(aqi_curr_age) > 0:
             # READ US FEED
-#            aqi_curr_xml = open(aqi_curr_file, "r")
-#            aqi_curr_dat = aqi_curr_xml.read().replace("cap:", "cap_")
-#            aqi_curr_xml.close()
+            aqi_curr_xml = open(aqi_curr_file, "r")
+            aqi_curr_dat = aqi_curr_xml.read().replace("cap:", "cap_")
+            aqi_curr_xml.close()
 
-#            aqi_curr_feed = feedparser.parse(aqi_curr_dat)
+            aqi_curr_feed = feedparser.parse(aqi_curr_dat)
 
             # READ THE FEED
-#            aqi_curr = aqi_curr_feed.entries
+            aqi_curr = aqi_curr_feed.entries
 
             # GO THROUGH THE FEED
-#            for post in aqi_curr:
-#                aqi_curr_raw    = str(remove_html_tags(str(post.description)))
-#                aqi_conditions  = re.sub(r"[\t]*", "", aqi_curr_raw)
-#                print(str(aqi_curr_raw))
-
-#                os.system('notify-send --urgency=low --category=im.received --icon=weather-severe-alert-symbolic "'+ str(post.title) + '" "' + str(aqi_conditions) + '"')
+            for post in aqi_curr:
+                aqi_curr_raw    = str(remove_html_tags(str(post.description)))
+                aqi_conditions  = re.sub(r"[\t]*", "", aqi_curr_raw)
+                print(str(aqi_curr_raw))
+                
+                os.system('notify-send --urgency=low --category=im.received --icon=weather-severe-alert-symbolic "'+ str(post.title) + '" "' + str(aqi_conditions) + '"')
 
             
-#else:
-#    os.system('touch ' + aqi_curr_file)
-#    os.system('chmod a+rw ' + aqi_curr_file)
-#    os.system('touch ' + aqi_curr_file)
-#    os.system('chmod a+rw ' + aqi_curr_file)                
+else:
+    os.system('touch ' + aqi_curr_file)
+    os.system('chmod a+rw ' + aqi_curr_file)
+    os.system('touch ' + aqi_curr_file)
+    os.system('chmod a+rw ' + aqi_curr_file)                
 
                 
                             
