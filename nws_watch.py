@@ -437,8 +437,22 @@ if aqi_us_exists:
 
                         for city in cfg_cities_aqi:
                             if city.lower() in post.description.lower():
-                            
+                                
                                 os.system('notify-send --urgency=low --category=im.received --icon=weather-severe-alert-symbolic "'+ str(post.cap_headline) + '" "' + str(post.cap_description) + '.. ' +  str(post.cap_instruction) + '"')
+                            
+                                if cfg_us_alert == "on":
+                                    os.system(cfg_sound)
+                                    if cfg_us_voice == "on":
+                                        cfg_msg = str(post.cap_headline) + ". " + str(aqi_us_msg) + ". " + str(post.cap_instruction)
+
+                                        # GOOGLE TTS
+                                        ttc = cfg_msg.replace("A(n)", "An")
+                                        ttc = ttc.replace("AQI ", ", on the air quality index. ,")
+                                        tts = gTTS(str(ttc), lang='en', tld='com')
+                                        tts.save(DIR_ASSET + '/wx_alert.mp3')
+                                        os.system("ffmpeg -y -i " + DIR_ASSET + "/wx_alert.mp3  -filter:a \"atempo="+str(cfg_us_speed)+"\" -acodec pcm_u8 -ar 44100 " + DIR_ASSET + "/wx_alert.wav")
+                                        os.system("play "+ DIR_ASSET +"/wx_alert.wav")
+
 
                                 # WRITE TO LOG OF EVENTS
                                 log_aqi_us_msg = str(int(time.time())) + '|' + post.cap_headline + '|All County|' + aqi_us_msg + '|' + url
@@ -483,10 +497,37 @@ if aqi_curr_exists:
             for post in aqi_curr:
                 aqi_curr_raw    = str(remove_html_tags(str(post.description)))
                 aqi_conditions  = re.sub(r"[\t]*", "", aqi_curr_raw)
-                print(str(aqi_curr_raw))
+                aqi_bits        = aqi_conditions.split("\n")
                 
-                os.system('notify-send --urgency=low --category=im.received --icon=weather-severe-alert-symbolic "'+ str(post.title) + '" "' + str(aqi_conditions) + '"')
-
+                print(aqi_bits[14])
+                
+                aqi_conditions = str(aqi_bits[14] + "\n" + aqi_bits[16])
+                
+                if "good" in str(aqi_conditions).lower():
+                    print(str(aqi_curr_raw))
+                    
+                elif "hazardous" in str(aqi_conditions).lower():
+                    os.system('notify-send --urgency=low --category=im.received --icon=weather-severe-alert-symbolic "'+ str(post.title) + '" (Alert Level: URGENT)"' + str(aqi_conditions) + '"')
+                
+                    if cfg_us_alert == "on":
+                        os.system(cfg_sound)
+                        
+                        if cfg_us_voice == "on":
+                            cfg_msg = "Current Air Quality Alert. " + str(aqi_conditions)
+                            
+                            # GOOGLE TTS
+                            ttc = cfg_msg.replace("AQI ", ", on the Air Quality Index for ")
+                            tts = gTTS(str(ttc), lang='en', tld='com')
+                            tts.save(DIR_ASSET + '/wx_alert.mp3')
+                            os.system("ffmpeg -y -i " + DIR_ASSET + "/wx_alert.mp3  -filter:a \"atempo="+str(cfg_us_speed)+"\" -acodec pcm_u8 -ar 44100 " + DIR_ASSET + "/wx_alert.wav")
+                            os.system("play "+ DIR_ASSET +"/wx_alert.wav")
+                
+                elif "moderate" in str(aqi_conditions).lower() or "unhealthy" in str(aqi_conditions).lower():
+                    os.system('notify-send --urgency=low --category=im.received --icon=weather-severe-alert-symbolic "'+ str(post.title) + ' (Alert Level: MONITOR)" "' + str(aqi_conditions) + '"')
+                    
+                else:
+                    print(str(aqi_curr_raw))
+                    
             
 else:
     os.system('touch ' + aqi_curr_file)
