@@ -441,7 +441,7 @@ if aqi_us_exists:
                                 os.system('notify-send --urgency=low --category=im.received --icon=weather-severe-alert-symbolic "'+ str(post.cap_headline) + '" "' + str(post.cap_description) + '.. ' +  str(post.cap_instruction) + '"')
                             
                                 if cfg_us_alert == "on":
-                                    os.system(cfg_sound)
+                                    #os.system(cfg_sound)
                                     if cfg_us_voice == "on":
                                         cfg_msg = str(post.cap_headline) + ". " + str(aqi_us_msg) + ". " + str(post.cap_instruction)
 
