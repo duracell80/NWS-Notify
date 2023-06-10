@@ -46,6 +46,7 @@ mkdir -p ~/.config/autostart
 cp -f NWS-Notify.desktop ~/.config/autostart
 sed -i "s|~/.local|${HOME}/.local|g" ~/.config/autostart/NWS-Notify.desktop
 
+mkdir -p ~/.local/bin
 cp -f wx_check.sh ~/.local/bin/wx_check
 chmod u+x ~/.local/bin/wx_check
 
