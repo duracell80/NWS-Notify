@@ -458,7 +458,13 @@ if aqi_us_exists:
                                 log_aqi_us_msg = str(int(time.time())) + '|' + post.cap_headline + '|All County|' + aqi_us_msg + '|' + url
 
                                 os.system('echo "' + str(log_aqi_us_msg) + '" >> ' + cfg_us_logtxt)
+else:
+    os.system('touch ' + aqi_us_file)
+    os.system('chmod a+rw ' + aqi_us_file)
+    os.system('touch ' + aqi_us_file)
+    os.system('chmod a+rw ' + aqi_us_file)                
 
+                                
             
             
 # US CURRENT AIRQUALITY FOR LOCATION 89=Nashville, TN 593=Willamsport, PA
