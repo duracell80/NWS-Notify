@@ -441,17 +441,17 @@ if aqi_us_exists:
                                 os.system('notify-send --urgency=low --category=im.received --icon=weather-severe-alert-symbolic "'+ str(post.cap_headline) + '" "' + str(post.cap_description) + '.. ' +  str(post.cap_instruction) + '"')
                             
                                 if cfg_us_alert == "on":
-                                    #os.system(cfg_sound)
-                                    if cfg_us_voice == "on":
-                                        cfg_msg = str(post.cap_headline) + ". " + str(aqi_us_msg) + ". " + str(post.cap_instruction)
+                                    os.system(cfg_sound)
+                                if cfg_us_voice == "on":
+                                    cfg_msg = str(post.cap_headline) + ". " + str(aqi_us_msg) + ". " + str(post.cap_instruction)
 
-                                        # GOOGLE TTS
-                                        ttc = cfg_msg.replace("A(n)", "An")
-                                        ttc = ttc.replace("AQI ", ", on the air quality index. ,")
-                                        tts = gTTS(str(ttc), lang='en', tld='com')
-                                        tts.save(DIR_ASSET + '/wx_alert.mp3')
-                                        os.system("ffmpeg -y -i " + DIR_ASSET + "/wx_alert.mp3  -filter:a \"atempo="+str(cfg_us_speed)+"\" -acodec pcm_u8 -ar 44100 " + DIR_ASSET + "/wx_alert.wav")
-                                        os.system("play "+ DIR_ASSET +"/wx_alert.wav")
+                                    # GOOGLE TTS
+                                    ttc = cfg_msg.replace("A(n)", "An")
+                                    ttc = ttc.replace("AQI ", ", on the air quality index. ,")
+                                    tts = gTTS(str(ttc), lang='en', tld='com')
+                                    tts.save(DIR_ASSET + '/wx_alert.mp3')
+                                    os.system("ffmpeg -y -i " + DIR_ASSET + "/wx_alert.mp3  -filter:a \"atempo="+str(cfg_us_speed)+"\" -acodec pcm_u8 -ar 44100 " + DIR_ASSET + "/wx_alert.wav")
+                                    os.system("play "+ DIR_ASSET +"/wx_alert.wav")
 
 
                                 # WRITE TO LOG OF EVENTS
