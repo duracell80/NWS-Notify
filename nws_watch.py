@@ -59,13 +59,15 @@ if cfg_us_enable == "on":
     cfg_locales         = cfg_locale.lower().split(",")
     cfg_watch           = cfg.get('nws_conf', 'watch', fallback='off')
     
+    cfg_aqi_alerts      = cfg.get('aqi_conf', 'enable_aqi_alerts', fallback='off')    
+    cfg_aqi_current     = cfg.get('aqi_conf', 'enable_aqi_current', fallback='off')
     cfg_region_aqi      = cfg.get('aqi_conf', 'region', fallback='TN')
     cfg_aqi_cities      = cfg.get('aqi_conf', 'cities', fallback='memphis,nashville,clarksville')
     cfg_cities_aqi      = cfg_aqi_cities.lower().split(",")
     cfg_aqi_usid        = cfg.get('aqi_conf', 'usid', fallback='89')
     aqi_curr_timer      = cfg.get('aqi_conf', 'timer_conditions', fallback='60')
     cfg_aqi_timer       = cfg.get('aqi_conf', 'timer_alerts', fallback='360')
-    
+
     cfg_locale_watch    = cfg.get('nws_conf', 'locale_watch', fallback='Dickson,Cheatham,Wilson,Williamson,Robertson,Rutherford,Sumner,Montgomery')
     cfg_locales_watch   = cfg_locale_watch.lower().split(",")
     
@@ -390,7 +392,7 @@ aqi_us_file             = DIR_WDATA + "/nws_aqi_data.xml"
 # CHECK FOR US AQI DATA FILE
 aqi_us_exists           = os.path.exists(aqi_us_file)
 
-if aqi_us_exists:
+if aqi_us_exists and cfg_aqi_alerts == "on":
         aqi_us_age = subprocess.check_output('find '+ aqi_us_file +' -mmin +' + cfg_aqi_timer, shell=True, universal_newlines=True)
 
         # CHECK THE AGE OF THE US AQI DATA
@@ -476,7 +478,7 @@ aqi_curr_file           = DIR_WDATA + "/nws_aqi_curr.xml"
 # CHECK FOR US AQI DATA FILE
 aqi_curr_exists         = os.path.exists(aqi_curr_file)
 
-if aqi_curr_exists:
+if aqi_curr_exists and cfg_aqi_current == "on":
         aqi_curr_age = subprocess.check_output('find '+ aqi_curr_file +' -mmin +' + aqi_curr_timer, shell=True, universal_newlines=True)
         
         # CHECK THE AGE OF THE US AQI DATA
