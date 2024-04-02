@@ -17,6 +17,15 @@ notify-send --urgency=low --category=im.received --icon=help-info-symbolic "Weat
 find $DIR_WDATA -name "*.xml" -type f -mtime +31 -delete
 
 wget --quiet -O "${DIR_WDATA}/nws_pds_data.xml" "https://www.spc.noaa.gov/products/spcpdswwrss.xml"
+wget --quiet -O "${DIR_WDATA}/nws_data.xml" "https://alerts.weather.gov/cap/TN.php?x=0"
+
+sleep 2
+
+TW_COUNT=$(cat "${DIR_WDATA}/nws_data.xml" | grep -i -A30 "tornado watch" | grep -i "davidson" | wc -l)
+
+if [[ $TW_COUNT > 0 ]]; then
+	notify-send --urgency=low --category=im.received --icon=weather-storm-symbolic "TORNADO WATCH IN EFFECT" "A tornado watch is in effect for Davidson County in Tenneessee, stay weather aware!"
+fi
 
 
 while true

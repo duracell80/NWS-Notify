@@ -199,7 +199,7 @@ for post in posts:
                         cfg_timer = "30"
                         os.system('touch ' + DIR_WDATA + '/active-nws/wind_warning')
                     if "tornado watch" in post.title.lower():
-                        cfg_timer = "10"
+                        cfg_timer = "5"
                         os.system('touch ' + DIR_WDATA + '/active-nws/tornado_watch')
                     if "severe thunderstorm" in post.title.lower():
                         cfg_timer = "10"
@@ -243,17 +243,17 @@ for post in posts:
                             url_sht = shorten.tinyurl.short(url)
                             url = url_sht
 
-                        # GENERATE A QRCODE TO THE NWS ... 
-                        # Config on or off relates to showing QR in notifcation, so we get QR codes in the /tmp directory to serve
-                        import pyqrcode
-                        import png
-                        from pyqrcode import QRCode
+                            # GENERATE A QRCODE TO THE NWS ... 
+                            # Config on or off relates to showing QR in notifcation, so we get QR codes in the /tmp directory to serve
+                            import pyqrcode
+                            import png
+                            from pyqrcode import QRCode
 
-                        url_bits = post.id.split("?x=")
+                            url_bits = post.id.split("?x=")
 
-                        frl = DIR_ASSET + "/qrcodes/nwsqr_" + url_bits[1] + ".png"
-                        qrl = pyqrcode.create(url)
-                        qrl.png(frl, scale =10, module_color=[0, 0, 0, 255], background=[0xff, 0xff, 0xff])
+                            frl = DIR_ASSET + "/qrcodes/nwsqr_" + url_bits[1] + ".png"
+                            qrl = pyqrcode.create(url)
+                            qrl.png(frl, scale =10, module_color=[0, 0, 0, 255], background=[0xff, 0xff, 0xff])
 
                         if cfg_qrcodes == "on":
                             cfg_script = cfg_cmd + ' --hint=string:image-path:'+frl+' --urgency=normal --category=im.received --icon=dialog-warning-symbolic "' + post.title + ' [ ' + locale_item.upper() + ' County ]" "' + cfg_msg + '"'
